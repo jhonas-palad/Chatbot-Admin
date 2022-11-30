@@ -8,13 +8,10 @@ const useAxiosPrivate = () => {
     const { auth } = useAuth();
 
     useEffect(() => {
-        console.log("AXIOS USEEFFECT CALLED");
         const requestIntercept = axiosPrivate.interceptors.request.use(
             (config) => {
                 //Do something before request is sent
                 //Attach Token in Authorization header
-                console.log("request intercept: ");
-                console.log(config);
                 if(!config.headers?.Authorization){
                     config.headers.Authorization = `Bearer ${auth?.access_token}`
                 }
@@ -27,8 +24,6 @@ const useAxiosPrivate = () => {
                 return response
             },
             async (err) => {
-                console.log("err Intercept response");
-                console.log(err);
                 const previousConfig = err?.config;
                 if(err?.response.status === 403 && !previousConfig?.retry){
                     previousConfig.retry = true;

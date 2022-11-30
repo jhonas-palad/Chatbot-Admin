@@ -1,11 +1,27 @@
+import { useEffect } from "react";
 import { Outlet } from "react-router-dom";
+import useAuth from "../hooks/useAuth";
+
+import 'bootstrap/dist/css/bootstrap.css';
+import '../css/main.css';
+import '../css/sizing.css';
+
+import NavigationBar from "./NavigationBar";
+
 
 const Layout = () => {
+    const {auth} = useAuth();
+    useEffect(()=> {
+        console.log("QWE:");
+        console.log(auth);
+    }, [auth]);
     return (
-        <main className="App">
-            <h1>APP</h1>
-            <Outlet />
-        </main>
+        <>
+            <NavigationBar/>
+            <main>
+                <Outlet />
+            </main>
+        </>
     )
 }
 

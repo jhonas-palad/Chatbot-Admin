@@ -1,15 +1,19 @@
 import { useLocation, Navigate, Outlet } from 'react-router-dom';
 import { useEffect } from 'react';
 import useAuth from '../hooks/useAuth';
+import { IntentProvider } from '../context/IntentProvider';
 
 const RequireAuth = () => {
-    const { auth, setAuth } = useAuth();
+    const { auth } = useAuth();
     const location = useLocation();
 
     return (
         auth?.access_token 
-            ? <Outlet />
-            : <Navigate to="/login" state={{from: location }} replace/>
+            ? (
+            <IntentProvider><Outlet /></IntentProvider>
+        ) : ( 
+        <Navigate to="/login" state={{from: location }} replace/>
+        )
     );
 }
 

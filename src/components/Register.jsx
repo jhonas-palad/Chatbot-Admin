@@ -1,50 +1,65 @@
 import React, {useRef, useState, useEffect} from "react";
 import { faCheck, faTimes, faInfoCircle } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon} from "@fortawesome/react-fontawesome";
+import {Link} from 'react-router-dom';
 import axios from '../api/axios';
+
+import Alert from 'react-bootstrap/Alert';
+import Button from 'react-bootstrap/Button';
+import Form from 'react-bootstrap/Form';
 
 
 const USER_REGEX = /^[a-zA-Z][a-zA-Z0-9-_]{3,23}$/;
 const PWD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$]).{8,24}$/;
 const REGISTER_URL = '/auth/register';
 
-
+//TODO
+//ERROR MESSAGES 
 const Register = () => {
     const userRef = useRef();
     const errRef = useRef();
 
+    const [NonFreshUsername, setNonFreshUsername] = useState(false);
+    const [NoneFreshPWD, setNoneFreshPWD] = useState(false);
+    const [NoneFreshMatch, setNoneFreshMatch] = useState(false);
+
     const [user, setUser] = useState('');
     const [validName, setValidName] = useState(false);
-    const [userFocus, setUserFocus] = useState(false);
 
     const [pwd, setPwd] = useState('');
     const [validPwd, setValidPwd] = useState(false);
-    const [pwdFocus, setPwdFocus] = useState(false);
 
     const [secretPass, setSecretPass] = useState('');
+    const [validSecret, setValidSecret] = useState(true);
 
     const [matchPwd, setMatchPwd] = useState('');
     const [validMatch, setValidMatch] = useState(false);
-    const [matchFocus, setMatchFocus] = useState(false);
 
     const [errMsg, setErrMsg] = useState([]);
     const [success, setSuccess] = useState(false);
 
 
+    const [formValid, setFormValid] = useState(false);
+
     //Set the focus of user input field when the component loads.
     useEffect(() => {
         userRef.current.focus();
+        console.log(userRef.current);
     }, []);
 
     //Validate the username input
     useEffect(()=>{
+        user && !NonFreshUsername && setNonFreshUsername(true);
         const result = USER_REGEX.test(user);
         setValidName(result);
     }, [user]);
 
     //Synchronize pwd and matchPwd every time they changes.
     useEffect(()=>{
+        pwd && !NoneFreshPWD && setNoneFreshPWD(true);
+        matchPwd && !NoneFreshMatch && setNoneFreshMatch(true);
         const result = PWD_REGEX.test(pwd);
+        console.log(result);
         setValidPwd(result);
         const isMatch = matchPwd === pwd;
         setValidMatch(isMatch);
@@ -64,6 +79,13 @@ const Register = () => {
         setErrMsg("Invalid Entry");
         return;
     }
+    if(!secretPass){
+        setValidSecret(false);
+        return;
+    }else{
+        setValidSecret(true);
+    }
+
     try{
         const response = await axios.post(REGISTER_URL,
                 JSON.stringify({
@@ -86,9 +108,9 @@ const Register = () => {
             errMessages.push("No server response");
         }else if (err.response?.status === 409 ){
             const {username, password, secret_pass} = err.response.data;
-            errMessages.push(username ?? "");
-            errMessages.push(password ?? "");
-            errMessages.push(secret_pass ?? "");
+            username && errMessages.push(<b>{username}</b>)
+            password && errMessages.push(<b>{password}</b>)
+            secret_pass && errMessages.push(<b>{secret_pass}</b>)
         }else{
             errMessages.push("Registration Failed");
         }
@@ -96,124 +118,137 @@ const Register = () => {
     }
  }
 
-  return (
-    <>
-    {success ? (
-            <section>
-                <h1>Success!</h1>
-                <p>
-                    <a href="#">Sign In</a>
-                </p>
-            </section>
-        ):(
-        <section>
-            <p ref={errRef}>
-                {
-                    errMsg.map((msg,index) => {
-                        if(msg !== ''){
-                            return <li key={index}>{msg}</li>
-                        }
-                    })
-                }<br/>
-            </p>
+return (
+    <section className="dflex-center">
+        <Form className="form-signup" noValidate onSubmit={handleSubmit}>
             <h1>Register</h1>
-            <form onSubmit={handleSubmit}>
-                <label htmlFor="username">
-                    Username:
-                    <span className={validName ? "valid": "hide"}>
-                        <FontAwesomeIcon icon={faCheck}/>
-                    </span>
-                    <span className={validName || !user ? "hide": "invalid"}>
-                        <FontAwesomeIcon icon={faTimes}/>
-                    </span>
-                </label>
-                <input
+            {
+                errMsg.length === 0 ? (
+                    <></>
+                ) : (
+                    <Alert variant="danger">
+                    {
+                        errMsg.map((msg,index) => {
+                            if(msg !== ''){
+                                return <li style={{listStyle:'none'}} key={index}>{msg}</li>
+                            }
+                        })
+                    }
+                    </Alert>
+                )
+            }
+            
+            {/* <label htmlFor="username">
+                Username:
+                <span className={validName ? "valid": "hide"}>
+                    <FontAwesomeIcon icon={faCheck}/>
+                </span>
+                <span className={validName || !user ? "hide": "invalid"}>
+                    <FontAwesomeIcon icon={faTimes}/>
+                </span>
+            </label> */}
+            <Form.Floating className="mb-3">
+                <Form.Control 
+                    id="username" 
                     type="text"
-                    id="username"
                     ref={userRef}
                     autoComplete="off"
                     onChange={(e)=>setUser(e.target.value)}
                     value={user}
+                    placeholder="Enter a username" 
                     required
-                    onFocus={()=>setUserFocus(true)}
-                    onBlur={()=>setUserFocus(false)}
+                    isValid={validName}
+                    isInvalid={NonFreshUsername && !validName}
                 />
-                <p id="uidnote">
-                    <FontAwesomeIcon icon={faInfoCircle}/>
-                    4 to 24 characters.<br/>
-                    Must begin with a letter.<br/>
-                    Letters, numbers, underscores, hyphens allowed.
-                </p>
-
-                <label htmlFor="password">
-                    Password:
-                    <span className={validPwd ? "valid": "hide"}>
-                        <FontAwesomeIcon icon={faCheck}/>
-                    </span>
-                    <span className={validPwd || !pwd ? "hide": "invalid"}>
-                        <FontAwesomeIcon icon={faTimes}/>
-                    </span>
+                <label htmlFor="username">
+                        Username
                 </label>
-                <input
+                <Form.Control.Feedback className="mb-3 text-justify" type="invalid">
+                    <span>
+                    <FontAwesomeIcon icon={faInfoCircle}/> 4 to 24 characters.
+                        Must begin with a letter.
+                        Letters, numbers, underscores, hyphens allowed.
+                    </span>
+                </Form.Control.Feedback>
+            </Form.Floating>
+            <Form.Floating className="mb-3">
+                <Form.Control
                     type="password"
-                    id="password"
+                    id="passwordInput"
+                    autoComplete="off"
                     onChange={(e)=>setPwd(e.target.value)}
                     value={pwd}
+                    placeholder="Enter a password"
                     required
-                    onFocus={()=>setPwdFocus(true)}
-                    onBlur={()=>setPwdFocus(false)}
+                    isValid={validPwd}
+                    isInvalid={NoneFreshPWD && !validPwd}
                 />
-                <p id="pwdnote">
-                    <FontAwesomeIcon icon={faInfoCircle}/>
-                    8 to 24 characters.<br/>
-                    Must include uppercase and lowercase letters, a number and a special character<br/>
-                    Allowed special characters: <span>!</span><span>@</span><span>#</span><span>$</span>
-                </p>
-
-                <label htmlFor="match_pwd">
-                    Confirm Password:
-                    <span className={validMatch && matchPwd ? "valid": "hide"}>
-                        <FontAwesomeIcon icon={faCheck}/>
-                    </span>
-                    <span className={validMatch || !matchPwd ? "hide": "invalid"}>
-                        <FontAwesomeIcon icon={faTimes}/>
-                    </span>
+                <label htmlFor="passwordInput">
+                    Password
                 </label>
-                <input
+                <Form.Control.Feedback className="mb-3 text-justify" type="invalid">
+                    <span>
+                        <FontAwesomeIcon icon={faInfoCircle}/> 8 to 24 characters.
+                        Must include uppercase and lowercase letters, a number and a special character
+                        Allowed special characters: <span>!</span><span>@</span><span>#</span><span>$</span>
+                    </span>
+                </Form.Control.Feedback>
+            </Form.Floating>
+            <Form.Floating className="mb-3">
+                <Form.Control
                     type="password"
-                    id="match_pwd"
+                    id="matchPwdInput"
                     onChange={(e)=>setMatchPwd(e.target.value)}
                     value={matchPwd}
+                    autoComplete="off"
+                    placeholder="Confirm password"
                     required
-                    onFocus={()=>setMatchFocus(true)}
-                    onBlur={()=>setMatchFocus(false)}
+                    isValid={validMatch}
+                    isInvalid={NoneFreshMatch && !validMatch}
                 />
-                <p id="matchnote">
-                    <FontAwesomeIcon icon={faInfoCircle}/>
-                    Must match the first password input field.
-                </p>
-                <label htmlFor="secret_pass">
-                    Secret Pass:
+                <label htmlFor="matchPwdInput">
+                    Confirm Password
                 </label>
-                <input
+                <Form.Control.Feedback className="mb-3 text-justify" type="invalid">
+                    <span>
+                        <FontAwesomeIcon icon={faInfoCircle}/> Must match the first password input field.
+                    </span>
+                </Form.Control.Feedback>
+            </Form.Floating>
+            <Form.Floating className="mb-3">
+                <Form.Control
                     type="text"
-                    id="secret_pass"
-                    required
+                    id="secretPass"
                     onChange={(e) => setSecretPass(e.target.value)}
                     value={secretPass}
+                    autoComplete="off"
+                    placeholder="Enter secret key"
+                    isInvalid={!validSecret}
                 />
-                <button disabled={!validName || !validPwd || !validMatch ? true: false}>Sign Up </button>
-                <p>
-                    Already Registered? <br/>
-                    <span className="line">
-                        {/* put router link here */}
-                        <a href="#">Sign in</a>
+                <label htmlFor="secretPass">
+                    Secret Key
+                </label>
+                <Form.Control.Feedback className="mb-3 text-justify" type="invalid">
+                    <span>
+                        <FontAwesomeIcon icon={faInfoCircle}/> Please provide a secret key.
                     </span>
-                </p>
-            </form>
-        </section>
-    )}
-    </>
+                </Form.Control.Feedback>
+            </Form.Floating>
+            <Button 
+                type="submit" 
+                className="mb-3 btn-block" 
+                disabled={!validName || !validPwd || !validMatch ? true: false}>
+                    Sign Up 
+            </Button>
+            <p className="flex-sb">
+                Already Registered? <br/>
+                <span className="line">
+                    {/* put router link here */}
+                    <Link to="/login">Sign in</Link>
+                </span>
+            </p>
+        </Form>
+    </section>
   )
 }
 

@@ -2,7 +2,12 @@ import React, {useRef, useState, useEffect } from 'react';
 import useAuth from '../hooks/useAuth';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import useRefreshToken from '../hooks/useRefreshToken';
-import axios from '../api/axios'
+import axios from '../api/axios';
+
+import Alert from 'react-bootstrap/Alert';
+import Button from 'react-bootstrap/Button';
+import Form from 'react-bootstrap/Form';
+import FloatingLabel from 'react-bootstrap/FloatingLabel';
 
 const LOGIN_URL = '/auth/login';
 
@@ -73,14 +78,15 @@ const Login = () => {
             navigate(from, { replace: true });
             
         }catch(err){
+            console.log(err);
             if(!err.response){
-                setErrMsg("No server response");
+                setErrMsg(<b>No server response</b>);
             }else if(err.response?.status === 401){
-                setErrMsg("Incorrect username or password");
+                setErrMsg(<b>Incorrect username or password</b>);
             }else if(err.response?.status === 422){
-                setErrMsg("Missing username or password");
+                setErrMsg(<b>Missing username or password</b>);
             }else{
-                setErrMsg('Login Failed');
+                setErrMsg(<b>Something went worng</b>);
             }
             userRef.current.focus();
         }
@@ -89,46 +95,57 @@ const Login = () => {
         }
     }
     return (
-        <section>
-            <p>
-                {errMsg}
-            </p>
-            <h1>Sign in</h1>
-            <form onSubmit={handleSubmit}>
-                <label htmlFor="username">
-                    Username:
-                </label>
-                <input 
-                    type="text"
-                    id="username"
-                    ref={userRef}
-                    autoComplete="off"
-                    onChange={(e) => setUser(e.target.value)}
-                    value={user}
-                    placeholder="Enter username"
-                    required
-                />
-                <label htmlFor="password">
-                    Password:
-                </label>
-                <input 
-                    type="password"
-                    id="password"
-                    autoComplete="off"
-                    onChange={(e) => setPwd(e.target.value)}
-                    value={pwd}
-                    placeholder="Enter password"
-                    required
-                />
-                <button disabled={isSubmit}>Sign in</button>
-            </form>
-            <p>
-                Need an Account?<br/>
+        <section className="dflex-center">
+        <Form onSubmit={handleSubmit} className="text-center form-signin">
+            <h1 className="h3 mb-3 font-weight-normal" >Sign in</h1>
+            {
+                errMsg ? (
+                <Alert style={{textAlign:"initial"}} className="mb-3 " variant='danger'>
+                        {errMsg}
+                </Alert>
+                ) : (
+                    <></>
+                )
+            }
+            
+                <FloatingLabel
+                    className="mb-3"
+                    controlId="usernameInput"
+                    label="Username"
+                >
+                    <Form.Control 
+                        type="text"
+                        ref={userRef}
+                        autoComplete="off"
+                        onChange={(e) => setUser(e.target.value)}
+                        placeholder="Enter username"
+                        value={user}
+                        required
+                    />
+                </FloatingLabel>
+                <FloatingLabel 
+                    className="mb-3"
+                    controlId="passwordInput"
+                    label="Password"
+                >
+                    <Form.Control
+                        type="password"
+                        autoComplete="off"
+                        onChange={(e) => setPwd(e.target.value)}
+                        value={pwd}
+                        placeholder="Enter password"
+                        required
+                    />
+                </FloatingLabel>
+                <Button type="submit" className="btn-lg btn-block mb-3" disabled={isSubmit}>Sign in</Button>
+            <p className="flex-sb">
+                Need an Account? 
                 <span>
                     {/* put router link here */}
-                    <a href="#">Sign up</a>
+                    <Link to="/register">Sign up</Link>
                 </span>
             </p>
+            </Form>
         </section>
     )
 }

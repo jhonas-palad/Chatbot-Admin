@@ -1,9 +1,8 @@
 import React, { createContext, useState, useEffect } from "react";
 const AuthContext = createContext({});
 
-export const AuthProvider = ({ children }) =>{
+export const AuthProvider = ({ children }) => {
     const [auth, setAuth] = useState({});
-
 
     useEffect(()=>{
         console.log("AuthProvider: ");

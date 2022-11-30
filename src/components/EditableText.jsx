@@ -1,9 +1,15 @@
 import React, { useState } from 'react';
+import Accordion from 'react-bootstrap/Accordion';
+import Button from 'react-bootstrap/Button';
+import FormControl from 'react-bootstrap/FormControl';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faPenSquare, faTrash } from '@fortawesome/free-solid-svg-icons';
 
 function EditableText({ text, useEditText, useRemoveText }) {
     const {id, value} = text;
     const [isEdit, setIsEdit] = useState(false);
     const [inputValue, setValue] = useState(value);
+
     const editText = useEditText();
     const removeText = useRemoveText();
 
@@ -17,23 +23,36 @@ function EditableText({ text, useEditText, useRemoveText }) {
             return;
         }
         value != inputValue && editText(id, inputValue);
+        
     }
     const handleRemove = () => {
         removeText(id);
     }
     return (
-        <>
-            <input 
+
+        <Accordion.Body>
+            <FormControl 
+                as="textarea"
+                rows={5} 
                 type="text"
+                className="input-underline no-outline"
                 value={inputValue}
                 onChange={(e) => setValue(e.target.value)}
                 disabled={!isEdit}
             />
-
-            <button type="button" onClick={isEdit ? handleSave : handleEdit}>{isEdit ? 'Save' : 'Edit'}</button>
-            <button type="button" onClick={handleRemove}>Remove</button>
+            <div style={{gap:"1rem"}}className="mt-3 d-flex justify-content-end">
+                <Button type="button" variant={isEdit ? 'success':'primary'} onClick={isEdit ? handleSave : handleEdit}>
+                    
+                    {isEdit ? 'Save' : 'Edit'}
+                </Button>
+                <Button type="button" variant="danger" onClick={handleRemove}>
+                    
+                    Remove
+                </Button>
+            </div>
             
-        </>
+            
+        </Accordion.Body>
     );
 }
 
