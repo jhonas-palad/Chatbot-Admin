@@ -10,7 +10,9 @@ const RequireAuth = () => {
     return (
         auth?.access_token 
             ? (
-            <IntentProvider><Outlet /></IntentProvider>
+            <IntentProvider>
+                <Outlet />
+            </IntentProvider>
         ) : ( 
         <Navigate to="/login" state={{from: location }} replace/>
         )

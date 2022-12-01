@@ -1,6 +1,6 @@
 import React, {useEffect, useState, useContext} from 'react';
 import { Outlet } from "react-router-dom";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import useAxiosPrivate from "../hooks/useAxiosPrivate";
 import IntentContext from '../context/IntentProvider';
 
@@ -9,11 +9,14 @@ import ListGroup  from 'react-bootstrap/ListGroup';
 const URL_ENDPOINT = '/intent/all';
 
 function Home() {
-    // const [ intents, setIntents ] =useState([]);
+
     const axiosPrivate = useAxiosPrivate();
     const location = useLocation();
+    const navigate = useNavigate();
+    const {pathname} = location;
     const {intents, setIntents } = useContext(IntentContext);
     useEffect(() => {
+        console.log(pathname);
         const getIntents = async () => {
             try {
                 const response = await axiosPrivate.get(URL_ENDPOINT);
@@ -22,7 +25,7 @@ function Home() {
 
             }catch(err) {
                 console.log(err);
-                // navigate("/login", {state: {from: location},replace: true})
+                navigate("/login", {state: {from: location},replace: true})
             }
         }
         getIntents();
@@ -32,7 +35,7 @@ function Home() {
         
         <>
         <div 
-            style={{width:'360px', background: "#162137"}}
+            style={{width:'360px'}}
             className="
                 d-flex
                 flex-column
@@ -47,7 +50,7 @@ function Home() {
                     link-dark
                     text-decoration-none
                     border-bottom">
-                <span className="fs-5 text-light fw-semibold">
+                <span className="fs-5 fw-semibold">
                         List Intent
                 </span>
                 <Link to="intent/add" variant="success">
@@ -78,7 +81,7 @@ function Home() {
                                     w-100 
                                     align-items-center 
                                     justify-content-between">
-                                <strong className="mb-1 text-light">{intent.tag}</strong>
+                                <strong className="mb-1">{intent.tag}</strong>
                             </div>
                             
                         </Link>)
@@ -86,9 +89,14 @@ function Home() {
                 }
             </div>
         </div>
-        <Outlet/>
+        {
+            pathname === '/' ? (
+                <p>You can create and modify intents on the left panel</p> 
+            ) : (
+                <Outlet/>
+            )
+        }
         </>
-    
     );
 }
 

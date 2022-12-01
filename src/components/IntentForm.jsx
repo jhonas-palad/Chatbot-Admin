@@ -4,30 +4,36 @@ import uid from 'react-uuid';
 import EditableText from './EditableText';
 import ContainerFormGroup from './ContainerFormGroup';
 import IntentContext from '../context/IntentProvider';
-import { useParams } from 'react-router-dom';
+import { Navigate, useParams, useNavigate } from 'react-router-dom';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEllipsisVertical, faPlus } from '@fortawesome/free-solid-svg-icons'
 
 import Accordion  from 'react-bootstrap/Accordion';
+import Alert from 'react-bootstrap/Alert';
 import Button from 'react-bootstrap/Button';
 import Dropdown from 'react-bootstrap/Dropdown'
 import DropdownButton from 'react-bootstrap/DropdownButton';
+import Modal from 'react-bootstrap/Modal';
 import Tab from 'react-bootstrap/Tab';
 import Tabs from 'react-bootstrap/Tabs';
 
 
-const URL_ENDPOINT = '/intent/create'
+const CREATE_URL = '/intent/create';
 
 
 function IntentForm({_id}) {
     const id = _id;
     const isUpdate = id !== undefined;
-    const INTENT_GET_URL=`/intent/get/${id}`;
-    const INTENT_UPDATE_URL = `/intent/update/${id}`;
+    const GET_URL=`/intent/get/${id}`;
+    const UPDATE_URL = `/intent/update/${id}`;
+    const DELETE_URL = `/intent/delete/${id}`;
 
     const urlParams = useParams();
+    const navigate = useNavigate();
+
     const [tag, setTag] = useState('');
+    const [editTag, setEditTag] = useState(false);
 
     const { intents, setIntents } = useContext(IntentContext);
 
@@ -42,24 +48,29 @@ function IntentForm({_id}) {
     const [intentPatterns, setIntentPatterns] = useState([]);
     const [intentResponses, setIntentResponses] = useState([]);
     const [intentFollowUpResponses, setIntentFollowUpResponses] = useState([]);
-
+    
+    const [origTag, setOrigTag] = useState('');
     const [origPatterns, setOrigPatterns] = useState([]);
     const [origResponses, setOrigResponses] = useState([]);
     const [origFollowUpResponses, setOrigFollowUpResponses] = useState([]);
 
     const [showSaveChanges, setShowSaveChanges] = useState(false);
+    const [showDelete, setShowDelete] = useState(false);
+
+    const [alertMsg, setAlertMsg] = useState('');
+    const [successFlag, setSuccessFlag] = useState(false);
 
     const axiosPrivate = useAxiosPrivate();
 
+    const makeUID = (container) => {
+        return container.map( value => ({id: uid(value), value}));
+    }
     useEffect(() => {
-        const makeUID = (container) => {
-            return container.map( value => ({id: uid(value), value}));
-        }
         const getIntentData = async () => {
 
             try{
                 const response = await axiosPrivate(
-                    INTENT_GET_URL
+                    GET_URL
                 );
                 const {data} = response?.data;
                 const patterns = makeUID(data.patterns);
@@ -69,6 +80,8 @@ function IntentForm({_id}) {
                 setIntentPatterns(patterns);
                 setIntentResponses(responses);
                 setIntentFollowUpResponses(follow_up_responses);
+
+                setOrigTag(data.tag);
                 setOrigPatterns(patterns);
                 setOrigResponses(responses);
                 setOrigFollowUpResponses(follow_up_responses);
@@ -82,6 +95,20 @@ function IntentForm({_id}) {
 
     }, [urlParams]);
 
+    useEffect(()=>{
+        
+        if(!isUpdate){
+            return
+        }
+        if(origTag.trim() !== tag.trim()){
+            console.log(tag);
+            console.log(origTag);
+            setShowSaveChanges(true);
+        }
+        else{
+            setShowSaveChanges(false);
+        }
+    }, [tag]);
     useEffect(()=>{
         setIntentPatternErr('');
     },[intentPatterns]);
@@ -117,7 +144,6 @@ function IntentForm({_id}) {
             containerCopy[index] = {id, value:newValue.trim()};
             setContainer(containerCopy);
             let same = isUpdate && compareContainer(origContainer, containerCopy);
-            console.log(same);
             isUpdate && same ? setShowSaveChanges(false) : setShowSaveChanges(true);
         }
         return editText;
@@ -127,7 +153,6 @@ function IntentForm({_id}) {
             const containerCopy = [...container];
             const newContainer = containerCopy.filter(value => value.id !== id);
             let same = isUpdate && compareContainer(origContainer, newContainer);
-            console.log("REMOVE" + same);
             isUpdate && !same ? setShowSaveChanges(true) : setShowSaveChanges(false);
             setContainer(newContainer);
         }
@@ -176,7 +201,7 @@ function IntentForm({_id}) {
         });
 
         const config = {
-            url: !isUpdate ? URL_ENDPOINT : INTENT_UPDATE_URL,
+            url: !isUpdate ? CREATE_URL : UPDATE_URL,
             method: !isUpdate ? 'POST' : 'PUT',
             headers: {
                 Accept: 'application/json',
@@ -188,17 +213,102 @@ function IntentForm({_id}) {
 
         try{
             const response = await axiosPrivate(config);
-            !isUpdate && setIntents([response.data.data,...intents]);
+            if(!isUpdate){
+                setIntents([response.data.data,...intents])
+            }
+            else{
+                //Update the original data
+                const {data} = response?.data;
+                const patterns = makeUID(data.patterns);
+                const responses = makeUID(data.responses);
+                const follow_up_responses = makeUID(data.follow_up_responses);
+                
+                //Sync the tag name in the list
+                if(origTag !== tag){
+                    const intentCopy = [...intents];
+                    const intent = intentCopy.find(element => element._id === id);
+                    intent.tag = data.tag;
+                    setIntents(intentCopy);
+                }
+                setOrigTag(data.tag);
+                setOrigPatterns(patterns);
+                setOrigResponses(responses);
+                setOrigFollowUpResponses(follow_up_responses);
+            }
+            setSuccessFlag(true);
+            setAlertMsg(response.data.description);
         }
         catch(err){
-            console.log("ERR Submit");
-            console.log(err);
+            setSuccessFlag(false);
+            setAlertMsg("Error");
+        }
+        finally{
+            setTimeout(()=> setAlertMsg(''), 1500);
+            if(isUpdate){
+                setShowSaveChanges(false);
+                setEditTag(false);
+            }
+            
         }
 
     }
+    const handleDelete = async (e) => {
+        setShowDelete(false);
+        try{
+            const response = await axiosPrivate.delete(DELETE_URL);
+            console.log(response);
+            const {description} = response.data;
+            setSuccessFlag(false); //To set red background
+            setAlertMsg(description);
+            const removeIntent = () => {
+                return intents.filter(item => item._id !== id);
+            }
+            const newIntents = removeIntent();
+            setIntents(removeIntent());
+            navigate(`/intent/${newIntents[0]._id}`);
+        }
+        catch(err){
+            setSuccessFlag(false);
+            setAlertMsg("Error Delete");
+            console.log(err);
+        }
+        finally{
+            setTimeout(()=> setAlertMsg(''), 800);
+            if(isUpdate){
+                setShowSaveChanges(false);
+                setEditTag(false);
+            }
+        }
+    }
     return ( 
         <>
+            <Modal 
+                show={showDelete} 
+                onHide={()=>setShowDelete(false)}
+                backdrop='static'
+                keyboard={false}>
+                    <Modal.Header>
+                        <Modal.Title>Delete intent</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>
+                        Are you sure you want to delete this intent?
+                    </Modal.Body>
+                    <Modal.Footer>
+                        <Button 
+                            variant="secondary"
+                            onClick={()=>setShowDelete(false)}>
+                            Close
+                        </Button>
+                        <Button variant="danger" onClick={()=>handleDelete()}>
+                            Confirm
+                        </Button>
+                    </Modal.Footer>
+            </Modal>
+
             <div className="w-100 pt-3 pl-5 pr-4">
+                <Alert show={alertMsg !== ''} variant={successFlag ? "success" : "danger"} dismissible>
+                    {alertMsg}
+                </Alert>
                 <form style={{gap:"1.5rem"}}
                     onSubmit={handleSubmit} 
                     className="
@@ -220,6 +330,7 @@ function IntentForm({_id}) {
                                 onChange={(e) => setTag(e.target.value)}
                                 value={tag}
                                 required
+                                disabled={isUpdate && !editTag}
                             />
                         </div>
                         <div style={{gap:"1rem"}}className="d-flex">
@@ -227,7 +338,7 @@ function IntentForm({_id}) {
                             {
                                 !isUpdate ? (
                                     <Button type="submit" variant="success">
-                                        Add
+                                        Create
                                     </Button>
                                 ) : (
                                     <DropdownButton
@@ -241,15 +352,17 @@ function IntentForm({_id}) {
                                             <Dropdown.Item 
                                                 eventKey="1" 
                                                 as={Button} 
-                                                type="button">
-                                                    Edit
+                                                type="button"
+                                                onClick={()=> setEditTag(true)}>
+                                                    Edit tag
                                             </Dropdown.Item>
                                             <Dropdown.Divider />
                                             <Dropdown.Item 
                                                 eventKey="2" 
                                                 as={Button} 
                                                 type="button"
-                                                variant="danger">
+                                                variant="danger"
+                                                onClick={() => setShowDelete(true)}>
                                                     Delete
                                             </Dropdown.Item>
                                     </DropdownButton>
@@ -281,7 +394,7 @@ function IntentForm({_id}) {
                                         <Accordion>
                                             {
                                                 intentPatterns.length <= 0 ? 
-                                                <p>Add a patter</p>
+                                                <p>Add a pattern</p>
                                                         : 
                                                 intentPatterns.map( (text, index) => 
                                                     <Accordion.Item eventKey={index.toString()} key={text.id} >
@@ -316,25 +429,25 @@ function IntentForm({_id}) {
                                         <Accordion>
                                             {
                                                 intentResponses.length <= 0 ? (
-                                                <p>Add a Responses</p> 
+                                                    <p>Add a Response</p> 
                                                     ) : (
-                                                        intentResponses.map( (text, index) => 
-                                                            <Accordion.Item eventKey={index.toString()} key={text.id} >
-                                                                <Accordion.Header>Response #{index + 1}</Accordion.Header>
-                                                                <EditableText
-                                                                    text={text}
-                                                                    container={intentResponses}
-                                                                    useSaveFlag={() => setShowSaveChanges}
-                                                                    useEditText={() => handleEditText(
-                                                                        intentResponses, 
-                                                                        setIntentResponses, 
-                                                                        origResponses)}
-                                                                    useRemoveText={ () => handleRemoveText(
-                                                                        intentResponses, 
-                                                                        setIntentResponses, 
-                                                                        origResponses)}
-                                                                />
-                                                            </Accordion.Item>
+                                                    intentResponses.map( (text, index) => 
+                                                        <Accordion.Item eventKey={index.toString()} key={text.id} >
+                                                            <Accordion.Header>Response #{index + 1}</Accordion.Header>
+                                                            <EditableText
+                                                                text={text}
+                                                                container={intentResponses}
+                                                                useSaveFlag={() => setShowSaveChanges}
+                                                                useEditText={() => handleEditText(
+                                                                    intentResponses, 
+                                                                    setIntentResponses, 
+                                                                    origResponses)}
+                                                                useRemoveText={ () => handleRemoveText(
+                                                                    intentResponses, 
+                                                                    setIntentResponses, 
+                                                                    origResponses)}
+                                                            />
+                                                        </Accordion.Item>
                                                     )
                                                 )
                                             }
@@ -352,6 +465,7 @@ function IntentForm({_id}) {
                                         onChange={setIntentFollowUpResponse}
                                         setContainer={setIntentFollowUpResponses}
                                         buttonClick={addText}
+                                        errMsg=''
                                     />
                                     <div>
                                         <Accordion>
@@ -392,3 +506,6 @@ function IntentForm({_id}) {
 }
 
 export default IntentForm;
+
+//TODO
+//List intents must sync with newly updated tag
