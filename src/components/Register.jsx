@@ -137,16 +137,6 @@ return (
                     </Alert>
                 )
             }
-            
-            {/* <label htmlFor="username">
-                Username:
-                <span className={validName ? "valid": "hide"}>
-                    <FontAwesomeIcon icon={faCheck}/>
-                </span>
-                <span className={validName || !user ? "hide": "invalid"}>
-                    <FontAwesomeIcon icon={faTimes}/>
-                </span>
-            </label> */}
             <Form.Floating className="mb-3">
                 <Form.Control 
                     id="username" 
@@ -163,13 +153,12 @@ return (
                 <label htmlFor="username">
                         Username
                 </label>
-                <Form.Control.Feedback className="mb-3 text-justify" type="invalid">
-                    <span>
-                    <FontAwesomeIcon icon={faInfoCircle}/> 4 to 24 characters.
+                    
+                <Form.Text id="usernameHelp" muted>
+                        Your username must be 4 to 24 characters.
                         Must begin with a letter.
-                        Letters, numbers, underscores, hyphens allowed.
-                    </span>
-                </Form.Control.Feedback>
+                        Underscores and hyphens allowed.
+                </Form.Text>
             </Form.Floating>
             <Form.Floating className="mb-3">
                 <Form.Control
@@ -186,13 +175,11 @@ return (
                 <label htmlFor="passwordInput">
                     Password
                 </label>
-                <Form.Control.Feedback className="mb-3 text-justify" type="invalid">
-                    <span>
-                        <FontAwesomeIcon icon={faInfoCircle}/> 8 to 24 characters.
-                        Must include uppercase and lowercase letters, a number and a special character
-                        Allowed special characters: <span>!</span><span>@</span><span>#</span><span>$</span>
-                    </span>
-                </Form.Control.Feedback>
+                <Form.Text id="passwordHelp" muted>
+                    Your password must be 8-20 characters long, Must include
+                    uppercase and lowercase letters, a number and a special
+                    character Allowed special characters: !@#$
+                </Form.Text>
             </Form.Floating>
             <Form.Floating className="mb-3">
                 <Form.Control
