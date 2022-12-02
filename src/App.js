@@ -8,8 +8,10 @@ import IntentNew from './components/IntentNew';
 import Missing from './components/Missing';
 import RequireAuth from './components/RequireAuth'
 import PersistentLogin from './components/PersistentLogin';
+import Chatbot from './components/Chatbot';
 import { Routes, Route } from 'react-router-dom';
-import {IntentProvider} from './context/IntentProvider';
+
+import IntentList from './components/IntentList';
 import axios  from "./api/axios";
 
 
@@ -26,10 +28,12 @@ function App() {
 
         <Route element={<PersistentLogin/>}>
           <Route element={ <RequireAuth/> }>
-  
               <Route path="/" element={<Home/>}>
-                <Route path="intent/add" exact element={<IntentNew/>} />
-                <Route path="intent/:id" element={<IntentUpdate/>}/>
+                <Route path= "intent/" exact element={ <IntentList/> }> 
+                    <Route path="new" exact element={<IntentNew/>} />
+                    <Route path="update/:id" element={<IntentUpdate/>}/>
+                </Route>
+                <Route path="chatbot" element={<Chatbot/>}/>
               </Route>
           </Route>
         </Route>

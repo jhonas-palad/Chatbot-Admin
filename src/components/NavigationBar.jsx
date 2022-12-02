@@ -3,9 +3,7 @@ import useLogout from '../hooks/useLogout';
 import { useNavigate } from 'react-router-dom';
 
 import Button from 'react-bootstrap/Button';
-import Container from 'react-bootstrap/Container';
 import Navbar from 'react-bootstrap/Navbar';
-import { Nav } from 'react-bootstrap';
 
 function NavigationBar() {
     const { auth } = useAuth();

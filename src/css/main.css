@@ -9,7 +9,17 @@ section{
     height:100%;
 }
 
-
+hr{
+    margin: 1rem 0;
+    color: white;
+    height:1px;
+    background-color: currentColor;
+    border: 0;
+    opacity: .25;
+}
+.intent-width-center{
+    width: calc(100% - 360px - 280px);
+}
 .btn-block {
     display: block;
     width: 100%;
@@ -64,6 +74,9 @@ section{
     margin-bottom: 0;
     border-radius: 0.25rem;
 }
+.lh-m{
+    line-height: 2.25;
+}
 
 .no-outline:focus{
     outline:none;
@@ -73,3 +86,9 @@ section{
     overflow-y: auto;
 }
 
+.sidebar{
+    display:flex;
+    flex-direction: column;
+    flex-shrink: 0!important;
+    width: 280px;
+}

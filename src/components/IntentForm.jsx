@@ -1,15 +1,14 @@
 import React, { useEffect, useState, useContext } from 'react';
 import useAxiosPrivate from '../hooks/useAxiosPrivate';
 import uid from 'react-uuid';
-import EditableText from './EditableText';
 import ContainerFormGroup from './ContainerFormGroup';
 import IntentContext from '../context/IntentProvider';
-import { Navigate, useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
+import ContainerTextPagination from './ContainerTextPagination';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEllipsisVertical, faPlus } from '@fortawesome/free-solid-svg-icons'
+import { faEllipsisVertical } from '@fortawesome/free-solid-svg-icons'
 
-import Accordion  from 'react-bootstrap/Accordion';
 import Alert from 'react-bootstrap/Alert';
 import Button from 'react-bootstrap/Button';
 import Dropdown from 'react-bootstrap/Dropdown'
@@ -21,16 +20,16 @@ import Tabs from 'react-bootstrap/Tabs';
 
 const CREATE_URL = '/intent/create';
 
+function IntentForm() {
 
-function IntentForm({_id}) {
-    const id = _id;
+    const urlParams = useParams();
+    const {id} = urlParams;
     const isUpdate = id !== undefined;
+    const navigate = useNavigate();
+
     const GET_URL=`/intent/get/${id}`;
     const UPDATE_URL = `/intent/update/${id}`;
     const DELETE_URL = `/intent/delete/${id}`;
-
-    const urlParams = useParams();
-    const navigate = useNavigate();
 
     const [tag, setTag] = useState('');
     const [editTag, setEditTag] = useState(false);
@@ -59,6 +58,10 @@ function IntentForm({_id}) {
 
     const [alertMsg, setAlertMsg] = useState('');
     const [successFlag, setSuccessFlag] = useState(false);
+
+    const [patternsCurrentPage, setPatternCurrentPage] = useState(1);
+    const [responsesCurrentPage, setResponsesCurrentPage] = useState(1);
+    const [fupResponsesCurrentPage, setFupResponsesCurrentPage] = useState(1);
 
     const axiosPrivate = useAxiosPrivate();
 
@@ -116,7 +119,14 @@ function IntentForm({_id}) {
     useEffect(()=>{
         setIntentResponseErr('');
     },[intentResponses]);
-    
+
+    useEffect(()=>{
+        //Reset all pages
+        setPatternCurrentPage(1);
+        setResponsesCurrentPage(1);
+        setFupResponsesCurrentPage(1);
+    }, [id]);
+
     const compareContainer = (container1, container2) => {
         const len1 = container1.length;
         const len2 = container2.length;
@@ -305,7 +315,7 @@ function IntentForm({_id}) {
                     </Modal.Footer>
             </Modal>
 
-            <div className="w-100 pt-3 pl-5 pr-4">
+            <div className="w-100 pt-3 pl-5 pr-4 p-2">
                 <Alert show={alertMsg !== ''} variant={successFlag ? "success" : "danger"} dismissible>
                     {alertMsg}
                 </Alert>
@@ -388,29 +398,21 @@ function IntentForm({_id}) {
                                         buttonClick={addText}
                                         errMsg={intentPatternErr}
                                     />
-                                    <div 
-                                        className="scrollarea" 
-                                        style={{height:'700px'}}>
-                                        <Accordion>
-                                            {
-                                                intentPatterns.length <= 0 ? 
-                                                <p>Add a pattern</p>
-                                                        : 
-                                                intentPatterns.map( (text, index) => 
-                                                    <Accordion.Item eventKey={index.toString()} key={text.id} >
-                                                        <Accordion.Header>Pattern #{index + 1}</Accordion.Header>
-                                                        <EditableText
-                                                            text={text}
-                                                            useSaveFlag={() => setShowSaveChanges}
-                                                            container={intentPatterns}
-                                                            useEditText={() => handleEditText(intentPatterns, setIntentPatterns, origPatterns)}
-                                                            useRemoveText={ () => handleRemoveText(intentPatterns, setIntentPatterns, origPatterns)}
-                                                        />
-                                                    </Accordion.Item>
-                                                )
-                                            }
-                                        </Accordion>
-                                    </div>
+                                    <ContainerTextPagination
+                                        useContainerState ={() => ({
+                                            container: intentPatterns, 
+                                            setContainer: setIntentPatterns
+                                        })}
+                                        origContainer = {origPatterns} //Used for editing a particular row
+                                        handleEditText={ handleEditText }
+                                        handleRemoveText={ handleRemoveText }
+                                        setShowSaveChanges={ setShowSaveChanges }
+                                        itemsPerPage={ 5 }
+                                        useCurrentPageState={()=>({
+                                            currentPage: patternsCurrentPage, 
+                                            setCurrentPage: setPatternCurrentPage
+                                        })}
+                                    />
                                 </div>
                             </Tab>
                             <Tab
@@ -425,34 +427,21 @@ function IntentForm({_id}) {
                                         buttonClick={addText}
                                         errMsg={intentResponseErr}
                                     />
-                                    <div>
-                                        <Accordion>
-                                            {
-                                                intentResponses.length <= 0 ? (
-                                                    <p>Add a Response</p> 
-                                                    ) : (
-                                                    intentResponses.map( (text, index) => 
-                                                        <Accordion.Item eventKey={index.toString()} key={text.id} >
-                                                            <Accordion.Header>Response #{index + 1}</Accordion.Header>
-                                                            <EditableText
-                                                                text={text}
-                                                                container={intentResponses}
-                                                                useSaveFlag={() => setShowSaveChanges}
-                                                                useEditText={() => handleEditText(
-                                                                    intentResponses, 
-                                                                    setIntentResponses, 
-                                                                    origResponses)}
-                                                                useRemoveText={ () => handleRemoveText(
-                                                                    intentResponses, 
-                                                                    setIntentResponses, 
-                                                                    origResponses)}
-                                                            />
-                                                        </Accordion.Item>
-                                                    )
-                                                )
-                                            }
-                                        </Accordion>
-                                    </div>
+                                    <ContainerTextPagination
+                                        useContainerState ={() => ({
+                                            container: intentResponses, 
+                                            setContainer: setIntentResponses
+                                        })}
+                                        origContainer = {origResponses} //Used for editing a particular row
+                                        handleEditText={ handleEditText }
+                                        handleRemoveText={ handleRemoveText }
+                                        setShowSaveChanges={ setShowSaveChanges }
+                                        itemsPerPage={ 5 }
+                                        useCurrentPageState={()=>({
+                                            currentPage:responsesCurrentPage, 
+                                            setCurrentPage:setResponsesCurrentPage
+                                        })}
+                                    />
                                 </div>
                             </Tab>
                             <Tab
@@ -467,34 +456,21 @@ function IntentForm({_id}) {
                                         buttonClick={addText}
                                         errMsg=''
                                     />
-                                    <div>
-                                        <Accordion>
-                                            {
-                                                intentFollowUpResponses.length <= 0 ? (
-                                                <p>Add a intentPattern</p>
-                                                    ) : (
-                                                    intentFollowUpResponses.map( (text, index) => 
-                                                        <Accordion.Item eventKey={index.toString()} key={text.id} >
-                                                            <Accordion.Header>Follow up response #{index + 1}</Accordion.Header>
-                                                                <EditableText
-                                                                    text={text}
-                                                                    container={intentFollowUpResponses}
-                                                                    useSaveFlag={() => setShowSaveChanges}
-                                                                    useEditText={() => handleEditText(
-                                                                        intentFollowUpResponses, 
-                                                                        setIntentFollowUpResponses, 
-                                                                        origFollowUpResponses)}
-                                                                    useRemoveText={ () => handleRemoveText(
-                                                                        intentFollowUpResponses, 
-                                                                        setIntentFollowUpResponses, 
-                                                                        origFollowUpResponses)}
-                                                                />
-                                                        </Accordion.Item>
-                                                    )
-                                                )
-                                            }
-                                        </Accordion>
-                                    </div>
+                                    <ContainerTextPagination
+                                        useContainerState ={() => ({
+                                            container: intentFollowUpResponses, 
+                                            setContainer: setIntentFollowUpResponses
+                                        })}
+                                        origContainer = {origFollowUpResponses} //Used for editing a particular row
+                                        handleEditText={ handleEditText }
+                                        handleRemoveText={ handleRemoveText }
+                                        setShowSaveChanges={ setShowSaveChanges }
+                                        itemsPerPage={ 5 }
+                                        useCurrentPageState={()=>({
+                                            currentPage:fupResponsesCurrentPage, 
+                                            setCurrentPage:setFupResponsesCurrentPage
+                                        })}
+                                    />
                                 </div>
                             </Tab>
                         </Tabs>
@@ -506,6 +482,3 @@ function IntentForm({_id}) {
 }
 
 export default IntentForm;
-
-//TODO
-//List intents must sync with newly updated tag
