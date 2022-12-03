@@ -27,7 +27,8 @@ function IntentListBar({children}) {
             </div>
             <div className="
                     list-group
-                    scrollarea">
+                    scrollarea
+                    rounded-0">
                         {children}
             </div>
         </div>

@@ -1,6 +1,6 @@
 import React, {useEffect, useState, useContext} from 'react';
 import { Outlet } from "react-router-dom";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import useAxiosPrivate from "../hooks/useAxiosPrivate";
 import IntentContext from '../context/IntentProvider';
 import IntentListBar from './IntentListBar';
@@ -12,6 +12,8 @@ function IntentList() {
     const location = useLocation();
     const navigate = useNavigate();
     const {pathname} = location;
+    const {id} = useParams();
+    const [renderList, setRenderList] = useState([]);
     const {intents, setIntents } = useContext(IntentContext);
     useEffect(() => {
         console.log(pathname);
@@ -29,6 +31,39 @@ function IntentList() {
         getIntents();
     }, []);
 
+    useEffect(()=>{
+        console.log(id);
+        const makeList = () => {
+            return intents.map((intent) => {
+                let active = '';
+                if(intent._id === id){
+                    active = 'active';
+                }
+                return (
+                <Link className={`
+                    list-group-item
+                    list-group-item-action
+                    py-3
+                    lh-m
+                    border-0
+                    border-bottom
+                    rounded-0
+                    ${active}`}
+                        key={intent._id} 
+                        to={`update/${intent._id}`}>
+                    <div className="
+                            d-flex
+                            w-100 
+                            align-items-center 
+                            justify-content-between">
+                        <span className="mb-1">{intent.tag}</span>
+                    </div>
+                </Link>)
+                
+            });
+        };
+        setRenderList(makeList());
+    }, [intents, id]);
     return ( 
         <>
             {
@@ -40,29 +75,12 @@ function IntentList() {
             }
             <IntentListBar>
                 {
-                    !intents ? (
+                    !renderList ? (
                         <p>Empty List</p>
                     ) : (
-                        intents.map((intent) => 
-                        <Link className="
-                            list-group-item
-                            list-group-item-action
-                            py-3
-                            lh-m
-                            border-0
-                            border-bottom"
-                                key={intent._id} 
-                                to={`update/${intent._id}`}>
-                            <div className="
-                                    d-flex
-                                    w-100 
-                                    align-items-center 
-                                    justify-content-between">
-                                <span className="mb-1">{intent.tag}</span>
-                            </div>
-                            
-                        </Link>)
+                        renderList.map(elem=> elem)
                     )
+                    
                 }
             </IntentListBar>
         </>

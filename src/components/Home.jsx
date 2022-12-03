@@ -9,10 +9,6 @@ function Home() {
 
     const location = useLocation();
     const {pathname} = location;
-    useEffect(()=>{
-        console.log("Location");
-        console.log(location);
-    }, [location]);
     return (
         <>
         <Sidebar/>

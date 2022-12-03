@@ -122,6 +122,7 @@ function IntentForm() {
 
     useEffect(()=>{
         //Reset all pages
+        console.log(id);
         setPatternCurrentPage(1);
         setResponsesCurrentPage(1);
         setFupResponsesCurrentPage(1);

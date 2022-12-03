@@ -17,9 +17,10 @@ hr{
     border: 0;
     opacity: .25;
 }
-.intent-width-center{
+
+/* .intent-width-center{
     width: calc(100% - 360px - 280px);
-}
+} */
 .btn-block {
     display: block;
     width: 100%;

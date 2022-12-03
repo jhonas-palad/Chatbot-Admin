@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import useAuth from "../hooks/useAuth";
 import useLogout from "../hooks/useLogout";
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 
@@ -7,13 +6,13 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBrain, faRobot } from '@fortawesome/free-solid-svg-icons'
 
 import Button from 'react-bootstrap/Button';
-import Navbar from 'react-bootstrap/Navbar';
+
 
 const INTENT_PATH_REGEX = /^\/intent.*/;
 const CHATBOT_PATH_REGEX = /^\/chatbot.*/;
 
 function Sidebar() {
-    const { auth } = useAuth();
+
     const logout = useLogout();
     const navigate = useNavigate();
     const location = useLocation();

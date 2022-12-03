@@ -1,5 +1,5 @@
 import React, {useRef, useState, useEffect} from "react";
-import { faCheck, faTimes, faInfoCircle } from "@fortawesome/free-solid-svg-icons";
+import { faInfoCircle } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {Link} from 'react-router-dom';
 import axios from '../api/axios';
@@ -17,7 +17,6 @@ const REGISTER_URL = '/auth/register';
 //ERROR MESSAGES 
 const Register = () => {
     const userRef = useRef();
-    const errRef = useRef();
 
     const [NonFreshUsername, setNonFreshUsername] = useState(false);
     const [NoneFreshPWD, setNoneFreshPWD] = useState(false);
@@ -36,15 +35,11 @@ const Register = () => {
     const [validMatch, setValidMatch] = useState(false);
 
     const [errMsg, setErrMsg] = useState([]);
-    const [success, setSuccess] = useState(false);
-
-
-    const [formValid, setFormValid] = useState(false);
+    const [setSuccess] = useState(false);
 
     //Set the focus of user input field when the component loads.
     useEffect(() => {
         userRef.current.focus();
-        console.log(userRef.current);
     }, []);
 
     //Validate the username input
@@ -87,7 +82,7 @@ const Register = () => {
     }
 
     try{
-        const response = await axios.post(REGISTER_URL,
+        await axios.post(REGISTER_URL,
                 JSON.stringify({
                     username: user,
                     password: pwd, 
@@ -132,6 +127,7 @@ return (
                             if(msg !== ''){
                                 return <li style={{listStyle:'none'}} key={index}>{msg}</li>
                             }
+                            return null;
                         })
                     }
                     </Alert>

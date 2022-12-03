@@ -38,7 +38,7 @@ const ContainerTextPagination = ({
                     currentPage < totalPages && <Pagination.Next onClick={()=>paginate(currentPage + 1)}/>
                 }
                 {
-                    totalPages && currentPage !== totalPages && <Pagination.Last onClick={()=>paginate(totalPages)}/>
+                    totalPages !== 0 && currentPage !== totalPages && <Pagination.Last onClick={()=>paginate(totalPages)}/>
                 }
             </Pagination>
             <Accordion>
