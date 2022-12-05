@@ -29,3 +29,19 @@
 .pr-5{
     padding-right: 2rem!important;
 }
+
+
+.scrollarea::-webkit-scrollbar {
+    width: 1vh;               /* width of the entire scrollbar */
+  }
+.scrollarea::-webkit-scrollbar {
+    background: rgb(214, 214, 214);               /* width of the entire scrollbar */
+  }
+.scrollarea::-webkit-scrollbar-thumb{
+    background-color: rgb(120, 120, 120);
+    border: 1px solid transparent;
+    border-radius: 5px;
+}
+.scrollarea::-webkit-scrollbar-thumb:hover{
+    background-color: rgb(95, 95, 95);
+}

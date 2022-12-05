@@ -7,7 +7,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import ContainerTextPagination from './ContainerTextPagination';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEllipsisVertical } from '@fortawesome/free-solid-svg-icons'
+import { faEllipsis } from '@fortawesome/free-solid-svg-icons'
 
 import Alert from 'react-bootstrap/Alert';
 import Button from 'react-bootstrap/Button';
@@ -276,7 +276,7 @@ function IntentForm() {
             }
             const newIntents = removeIntent();
             setIntents(removeIntent());
-            navigate(`/intent/${newIntents[0]._id}`);
+            navigate(`/intent/update/${newIntents[0]._id}`);
         }
         catch(err){
             setSuccessFlag(false);
@@ -355,8 +355,8 @@ function IntentForm() {
                                     <DropdownButton
                                         key="start"
                                         drop="start"
-                                        className="dropdown-remove-arrow"
-                                        title={<FontAwesomeIcon icon={faEllipsisVertical}/>}>
+                                        className="dropdown-remove-arrow dropdown-button-elipsis"
+                                        title={<FontAwesomeIcon style={{color:'#5b5b5b'}} icon={faEllipsis}/>}>
                                             <Dropdown.Header>
                                                 Actions
                                             </Dropdown.Header>

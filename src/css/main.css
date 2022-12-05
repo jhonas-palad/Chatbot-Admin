@@ -40,6 +40,22 @@ hr{
     display: none;
 }
 
+.dropdown-button-elipsis .dropdown-toggle{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 35px;
+    width: 35px;
+    border-radius: 50%;
+    background: transparent;
+    border: 1px solid transparent;
+
+}
+.dropdown-button-elipsis .dropdown-toggle:hover{
+    background:#e6e6e6;
+    border: 1px solid transparent;
+}
+
 .flex-sb{
     display:flex;
     justify-content:space-between;
@@ -86,6 +102,35 @@ hr{
 .scrollarea {
     overflow-y: auto;
 }
+
+.rounded-left-msg{
+    border-top-left-radius: 1rem!important;
+    border-bottom-left-radius: 1rem!important;
+}
+.rounded-right-msg{
+    border-top-right-radius: 1rem!important;
+    border-bottom-right-radius: 1rem!important;
+}
+.rounded-top-msg{
+    border-top-right-radius: 1rem!important;
+    border-top-left-radius: 1rem!important;
+}
+.rounded-bottom-msg{
+    border-bottom-right-radius: 1rem!important;
+    border-bottom-left-radius: 1rem!important;
+}
+.rounded-msg-other-last{
+    border-top-left-radius: 1rem!important;
+    border-top-right-radius: 1rem!important;
+    border-bottom-right-radius: 1rem!important;
+}
+.rounded-msg-self-last{
+    border-top-left-radius: 1rem!important;
+    border-top-right-radius: 1rem!important;
+    border-bottom-left-radius: 1rem!important;
+}
+
+
 
 .sidebar{
     display:flex;
