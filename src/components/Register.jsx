@@ -1,29 +1,37 @@
 import React, {useRef, useState, useEffect} from "react";
 import { faInfoCircle } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon} from "@fortawesome/react-fontawesome";
-import {Link} from 'react-router-dom';
+import {Link, useNavigate} from 'react-router-dom';
 import axios from '../api/axios';
 
 import Alert from 'react-bootstrap/Alert';
 import Button from 'react-bootstrap/Button';
+import Col from 'react-bootstrap/Col';
+import Row from 'react-bootstrap/Row';
 import Form from 'react-bootstrap/Form';
-
+import Spinner  from "react-bootstrap/Spinner";
 
 const USER_REGEX = /^[a-zA-Z][a-zA-Z0-9-_]{3,23}$/;
 const PWD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$]).{8,24}$/;
 const REGISTER_URL = '/auth/register';
+const NAME_REGEX = /^[a-zA-Z\ ]+$/;
 
 //TODO
 //ERROR MESSAGES 
 const Register = () => {
     const userRef = useRef();
 
-    const [NonFreshUsername, setNonFreshUsername] = useState(false);
-    const [NoneFreshPWD, setNoneFreshPWD] = useState(false);
-    const [NoneFreshMatch, setNoneFreshMatch] = useState(false);
+    const navigate = useNavigate();
+    const [freshSubmit, setFreshSubmit] = useState(true);
 
-    const [user, setUser] = useState('');
-    const [validName, setValidName] = useState(false);
+    const [firstName, setFirstName ] = useState('');
+    const [ validFirstName, setValidFirstName ] = useState(false);
+
+    const [lastName, setLastName ] = useState('');
+    const [ validLastName, setValidLastName ] = useState(false);
+
+    const [username, setUserName] = useState('');
+    const [validUsername, setValidUsername] = useState(false);
 
     const [pwd, setPwd] = useState('');
     const [validPwd, setValidPwd] = useState(false);
@@ -37,6 +45,7 @@ const Register = () => {
     const [errMsg, setErrMsg] = useState([]);
     const [setSuccess] = useState(false);
 
+    const [isLoading, setIsLoading] = useState(false);
     //Set the focus of user input field when the component loads.
     useEffect(() => {
         userRef.current.focus();
@@ -44,18 +53,31 @@ const Register = () => {
 
     //Validate the username input
     useEffect(()=>{
-        user && !NonFreshUsername && setNonFreshUsername(true);
-        const result = USER_REGEX.test(user);
-        setValidName(result);
-    }, [user]);
+        if(!freshSubmit){
+            const result = USER_REGEX.test(username);
+            setValidUsername(result);
+        }   
+    }, [username]);
+    useEffect(()=>{
+        if(!freshSubmit){
+            const result = NAME_REGEX.test(firstName);
+            setValidFirstName(result);
+        }   
+    }, [firstName]);
+    useEffect(()=>{
+        if(!freshSubmit){
+            const result = NAME_REGEX.test(lastName);
+            setValidLastName(result);
+        }   
+    }, [lastName]);
+
 
     //Synchronize pwd and matchPwd every time they changes.
     useEffect(()=>{
-        pwd && !NoneFreshPWD && setNoneFreshPWD(true);
-        matchPwd && !NoneFreshMatch && setNoneFreshMatch(true);
-        const result = PWD_REGEX.test(pwd);
-        console.log(result);
-        setValidPwd(result);
+        if(!freshSubmit){
+            const result = PWD_REGEX.test(pwd);
+            setValidPwd(result);
+        }
         const isMatch = matchPwd === pwd;
         setValidMatch(isMatch);
     }, [pwd, matchPwd]);
@@ -63,55 +85,91 @@ const Register = () => {
     //Clear the error messages
     useEffect(()=>{
         setErrMsg([]);
-    }, [user, pwd, matchPwd, secretPass]);
+    }, [username, pwd, matchPwd, secretPass]);
 
-
- const handleSubmit = async (e) => {
-    e.preventDefault();
-    const validatedUser = USER_REGEX.test(user);
-    const validatedPwd = PWD_REGEX.test(pwd);
-    if(!validatedUser || !validatedPwd){
-        setErrMsg("Invalid Entry");
-        return;
+    const isDisabledBtn = () => {
+        return  !username || 
+                !pwd || 
+                !matchPwd || 
+                !secretPass ||
+                !firstName ||
+                !lastName;
     }
-    if(!secretPass){
-        setValidSecret(false);
-        return;
-    }else{
-        setValidSecret(true);
-    }
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        const validatedUsername = USER_REGEX.test(username);
+        const validatedPwd = PWD_REGEX.test(pwd);
+        const validatedFirstName = NAME_REGEX.test(firstName);
+        const validatedLastName = NAME_REGEX.test(lastName);
 
-    try{
-        await axios.post(REGISTER_URL,
-                JSON.stringify({
-                    username: user,
-                    password: pwd, 
-                    secret_pass: secretPass
-                }),
-                {
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    withCredentials: true
-                }
-            );
-        setSuccess(true);
-        //clear input fields
-    } catch (err){
-        let errMessages = [];
-        if(!err?.response){
-            errMessages.push("No server response");
-        }else if (err.response?.status === 409 ){
-            const {username, password, secret_pass} = err.response.data;
-            username && errMessages.push(<b>{username}</b>)
-            password && errMessages.push(<b>{password}</b>)
-            secret_pass && errMessages.push(<b>{secret_pass}</b>)
-        }else{
-            errMessages.push("Registration Failed");
+        setValidFirstName(validatedFirstName);
+        setValidLastName(validatedLastName);
+        setValidUsername(validatedUsername);
+        setValidPwd(validatedPwd);
+
+        console.log(validatedFirstName);
+        console.log(validatedLastName);
+        if(!validatedUsername  || 
+            !validatedPwd       || 
+            !validatedFirstName || 
+            !validatedLastName){
+            setFreshSubmit(false);
+            setErrMsg(["Some fields are invalid"]);
+            return;
         }
-        setErrMsg(errMessages);
+
+        if(pwd !== matchPwd){
+            setValidMatch(false);
+            return;
+        }else{
+            setValidMatch(true);
+        }
+        const clearInputFields = () => {
+            setFirstName('');
+            setLastName('');
+            setUserName('');
+            setPwd('');
+            setMatchPwd('');
+            setSecretPass('');
+        }
+        try{
+            setIsLoading(true);
+            await axios.post(REGISTER_URL,
+                    JSON.stringify({
+                        username: username,
+                        password: pwd, 
+                        secret_pass: secretPass,
+                        full_name:`${firstName} ${lastName}`
+                    }),
+                    {
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        withCredentials: true
+                    }
+                );
+            clearInputFields();
+            navigate('/login');
+        } catch (err){
+            let errMessages = [];
+            setFreshSubmit(false);
+            console.log(err);
+            if(!err?.response){
+                errMessages.push("No server response");
+            }else if (err.response?.status === 409 ){
+                const {username, password, secret_pass} = err.response.data;
+                username && errMessages.push(<b>{username}</b>)
+                password && errMessages.push(<b>{password}</b>)
+                secret_pass && errMessages.push(<b>{secret_pass}</b>)
+            }else{
+                errMessages.push("Registration Failed");
+            }
+            setErrMsg(errMessages);
+        }
+        finally{
+            setIsLoading(false);
+        }
     }
- }
 
 return (
     <section className="dflex-center">
@@ -133,18 +191,54 @@ return (
                     </Alert>
                 )
             }
+            <Row>
+                <Col>
+                    <Form.Floating className="mb-3">
+                        <Form.Control 
+                            id="firstName" 
+                            type="text"
+                            autoComplete="off"
+                            onChange={(e)=>setFirstName(e.target.value)}
+                            value={firstName}
+                            placeholder="Enter your first name" 
+                            required
+                            className={freshSubmit ? '' : validFirstName ? 'is-valid': 'is-invalid'}
+                        />
+                        <label htmlFor="username">
+                                First Name
+                        </label>
+                    </Form.Floating>
+                </Col>
+                <Col>
+                <Form.Floating className="mb-3">
+                    <Form.Control 
+                        id="lastName" 
+                        type="text"
+                        autoComplete="off"
+                        onChange={(e)=>setLastName(e.target.value)}
+                        value={lastName}
+                        placeholder="Enter your last name" 
+                        required
+                        className={freshSubmit ? '' : validLastName ? 'is-valid': 'is-invalid'}
+                    />
+                    <label htmlFor="username">
+                            Last Name
+                    </label>
+                </Form.Floating>
+                </Col>
+            </Row>
             <Form.Floating className="mb-3">
+                
                 <Form.Control 
                     id="username" 
                     type="text"
                     ref={userRef}
                     autoComplete="off"
-                    onChange={(e)=>setUser(e.target.value)}
-                    value={user}
+                    onChange={(e)=>setUserName(e.target.value)}
+                    value={username}
                     placeholder="Enter a username" 
                     required
-                    isValid={validName}
-                    isInvalid={NonFreshUsername && !validName}
+                    className={freshSubmit ? '' : validUsername ? 'is-valid': 'is-invalid'}
                 />
                 <label htmlFor="username">
                         Username
@@ -165,8 +259,7 @@ return (
                     value={pwd}
                     placeholder="Enter a password"
                     required
-                    isValid={validPwd}
-                    isInvalid={NoneFreshPWD && !validPwd}
+                    className={freshSubmit ? '' : validPwd ? 'is-valid': 'is-invalid'}
                 />
                 <label htmlFor="passwordInput">
                     Password
@@ -186,8 +279,7 @@ return (
                     autoComplete="off"
                     placeholder="Confirm password"
                     required
-                    isValid={validMatch}
-                    isInvalid={NoneFreshMatch && !validMatch}
+                    className={validMatch ? 'is-valid': 'is-invalid'}
                 />
                 <label htmlFor="matchPwdInput">
                     Confirm Password
@@ -220,8 +312,18 @@ return (
             <Button 
                 type="submit" 
                 className="mb-3 btn-block" 
-                disabled={!validName || !validPwd || !validMatch ? true: false}>
-                    Sign Up 
+                disabled={isDisabledBtn() || isLoading}>
+                    {
+                        isLoading ? (
+                            <Spinner
+                                as="span"
+                                animation="border"
+                                size="sm"
+                                role="status"/>
+                        ) : (
+                            'Sign Up'
+                        )
+                    }
             </Button>
             <p className="flex-sb">
                 Already Registered? <br/>

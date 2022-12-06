@@ -17,7 +17,7 @@ const initialMessages = [
     {member: BOT, text: 'You can test me here on this chat', time: new Date().toLocaleTimeString()},
     {member: BOT, text: 'Hello there!'}
 ]
-const WS_URL = 'ws://127.0.0.1:8000/chat';
+const WS_URL = 'ws://139.162.105.247/chat';
 const TRAINBOT_URL = '/intent/train_bot';
 
 export const Chatbot = () => {
@@ -56,7 +56,9 @@ export const Chatbot = () => {
         if(ws){
             ws.onopen = (event) => {
                 setStatus(1);
-                setMessages(prevState => [...initialMessages, ...prevState])
+                if(messages.length === 0){
+                    setMessages(prevState => [...initialMessages, ...prevState])
+                }
             }
             ws.onmessage = ({data}) => {
                 const {response, follow_up_responses} = JSON.parse(data);

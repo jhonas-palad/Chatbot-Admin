@@ -8,6 +8,7 @@ import Alert from 'react-bootstrap/Alert';
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
 import FloatingLabel from 'react-bootstrap/FloatingLabel';
+import { Spinner } from 'react-bootstrap';
 
 const LOGIN_URL = '/auth/login';
 
@@ -17,7 +18,7 @@ const Login = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const from = location.state?.from?.pathname || "/";
-
+    const [isLoading, setIsLoading] = useState(false);
     const userRef = useRef();
 
     const [user, setUser] = useState('');
@@ -27,7 +28,6 @@ const Login = () => {
 
     useEffect(() => {
         // Logback if the user is still loggedin 
-        console.log("Login: " + from);
         const logBack = async () => {
             try{
                 await refresh();
@@ -38,7 +38,7 @@ const Login = () => {
             }
         }
 
-        if(!auth?.access_token){
+        if(auth?.access_token){
             logBack();
         }
         else{
@@ -53,6 +53,7 @@ const Login = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setIsLoading(true);
         setIsSubmit(true);
         const params = new URLSearchParams({ 
             username: user,
@@ -70,15 +71,13 @@ const Login = () => {
                     withCredentials: true
                 }
             );
-            console.log(response);
-            const {access_token, token_type} = response.data;
-            setAuth({ user, pwd, access_token, token_type });
+            const {access_token, token_type, full_name} = response.data;
+            setAuth({ full_name, access_token, token_type });
             setUser('');
             setPwd('');
             navigate(from, { replace: true });
             
         }catch(err){
-            console.log(err);
             if(!err.response){
                 setErrMsg(<b>No server response</b>);
             }else if(err.response?.status === 401){
@@ -92,6 +91,7 @@ const Login = () => {
         }
         finally{
             setIsSubmit(false);
+            setIsLoading(false);
         }
     }
     return (
@@ -137,7 +137,21 @@ const Login = () => {
                         required
                     />
                 </FloatingLabel>
-                <Button type="submit" className="btn-lg btn-block mb-3" disabled={isSubmit}>Sign in</Button>
+                <Button type="submit" className="btn-lg btn-block mb-3" disabled={isSubmit}>
+                    {
+                        isLoading ? (
+                            <Spinner 
+                            as="span"
+                            className="text-white"
+                            role="status"
+                            variant="primary" 
+                            animation="border"
+                            />
+                        ) : (
+                            "Sign in"
+                        )
+                    }
+                    </Button>
             <p className="flex-sb">
                 Need an Account? 
                 <span>

@@ -5,7 +5,6 @@ import { IntentProvider } from '../context/IntentProvider';
 const RequireAuth = () => {
     const { auth } = useAuth();
     const location = useLocation();
-
     return (
         auth?.access_token 
             ? (

@@ -5,6 +5,9 @@ import useAxiosPrivate from "../hooks/useAxiosPrivate";
 import IntentContext from '../context/IntentProvider';
 import IntentListBar from './IntentListBar';
 import MsgBlock from './MsgBlock';
+
+import CenterSpinner from './CenterSpinner';
+
 const URL_ENDPOINT = '/intent/all';
 
 function IntentList() {
@@ -15,24 +18,31 @@ function IntentList() {
     const {id} = useParams();
     const [renderList, setRenderList] = useState([]);
     const {intents, setIntents } = useContext(IntentContext);
+
+    const [isLoading, setIsLoading] = useState(false);
+
+
     useEffect(() => {
-        console.log(pathname);
         const getIntents = async () => {
+            setIsLoading(true);
             try {
                 const response = await axiosPrivate.get(URL_ENDPOINT);
                 const { data } = response.data;
                 setIntents([...data].reverse());
 
             }catch(err) {
-                console.log(err);
-                navigate("/login", {state: {from: location},replace: true})
+                if(err?.response?.status === 403){
+                    navigate("/login", {state: {from: location},replace: true})
+                }
+            }
+            finally{
+                setIsLoading(false);
             }
         }
         getIntents();
     }, []);
 
     useEffect(()=>{
-        console.log(id);
         const makeList = () => {
             return intents.map((intent) => {
                 let active = '';
@@ -56,7 +66,7 @@ function IntentList() {
                             w-100 
                             align-items-center 
                             justify-content-between">
-                        <span className="mb-1">{intent.tag}</span>
+                        <span className="col-10 mb-1 small">{intent.tag}</span>
                     </div>
                 </Link>)
                 
@@ -73,15 +83,21 @@ function IntentList() {
                     <Outlet/>
                 )
             }
+            
             <IntentListBar>
                 {
-                    !renderList ? (
-                        <p>Empty List</p>
-                    ) : (
-                        renderList.map(elem=> elem)
+                    isLoading ? (
+                        <CenterSpinner/>
+                    ) : ( 
+                        !renderList ? (
+                            <p>Empty List</p>
+                        ) : (
+                            renderList.map(elem=> elem)
+                        )
                     )
-                    
                 }
+                
+                
             </IntentListBar>
         </>
      );

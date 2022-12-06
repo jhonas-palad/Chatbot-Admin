@@ -3,6 +3,8 @@ import { useState, useEffect } from "react";
 import useRefreshToken from '../hooks/useRefreshToken';
 import useAuth from '../hooks/useAuth';
 
+import CenterSpinner from "./CenterSpinner";
+
 const PersistLogin = () => {
     const [isLoading, setIsLoading] = useState(true);
     const refresh = useRefreshToken();
@@ -30,9 +32,11 @@ const PersistLogin = () => {
     return (
         <>
             {
-                isLoading ?
-                <p>Loading...</p>
-                : <Outlet/>
+                isLoading ? (
+                    <CenterSpinner/>
+                ) : ( 
+                    <Outlet/>
+                )
 
             }
             

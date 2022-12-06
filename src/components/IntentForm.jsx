@@ -3,11 +3,13 @@ import useAxiosPrivate from '../hooks/useAxiosPrivate';
 import uid from 'react-uuid';
 import ContainerFormGroup from './ContainerFormGroup';
 import IntentContext from '../context/IntentProvider';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import ContainerTextPagination from './ContainerTextPagination';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEllipsis } from '@fortawesome/free-solid-svg-icons'
+
+import CenterSpinner from './CenterSpinner';
 
 import Alert from 'react-bootstrap/Alert';
 import Button from 'react-bootstrap/Button';
@@ -26,6 +28,7 @@ function IntentForm() {
     const {id} = urlParams;
     const isUpdate = id !== undefined;
     const navigate = useNavigate();
+    const location = useLocation();
 
     const GET_URL=`/intent/get/${id}`;
     const UPDATE_URL = `/intent/update/${id}`;
@@ -63,6 +66,8 @@ function IntentForm() {
     const [responsesCurrentPage, setResponsesCurrentPage] = useState(1);
     const [fupResponsesCurrentPage, setFupResponsesCurrentPage] = useState(1);
 
+    const [ isLoading, setIsLoading ] = useState(false);
+
     const axiosPrivate = useAxiosPrivate();
 
     const makeUID = (container) => {
@@ -70,7 +75,7 @@ function IntentForm() {
     }
     useEffect(() => {
         const getIntentData = async () => {
-
+            setIsLoading(true);
             try{
                 const response = await axiosPrivate(
                     GET_URL
@@ -91,7 +96,24 @@ function IntentForm() {
                 
             }
             catch(err){
-                console.log(err);
+                let errMsg = '';
+                let needAuth = false;
+                if(!err?.response){
+                    errMsg = "No response from the server, make sure you have network connection"
+                }
+                else if(err.response?.status === 403){
+                    errMsg = "Authentication is needed";
+                    needAuth = true;
+                }
+                else{
+                    errMsg = `Intent with id ${id} missing, you may remove this intent if you wish to.`;
+                }
+                    setAlertMsg(errMsg);
+                    needAuth && navigate('/login', {state: {from: location}});
+                }
+            finally{
+                setTimeout(()=> setAlertMsg(''), 1500);
+                setIsLoading(false);
             }
         }
         isUpdate && getIntentData();
@@ -104,8 +126,6 @@ function IntentForm() {
             return
         }
         if(origTag.trim() !== tag.trim()){
-            console.log(tag);
-            console.log(origTag);
             setShowSaveChanges(true);
         }
         else{
@@ -122,7 +142,6 @@ function IntentForm() {
 
     useEffect(()=>{
         //Reset all pages
-        console.log(id);
         setPatternCurrentPage(1);
         setResponsesCurrentPage(1);
         setFupResponsesCurrentPage(1);
@@ -251,7 +270,20 @@ function IntentForm() {
         }
         catch(err){
             setSuccessFlag(false);
-            setAlertMsg("Error");
+            let errMsg = '';
+            let needAuth = false;
+            if(!err?.response){
+                errMsg = "No response from the server, make sure you have network connection"
+            }
+            else if(err.response?.status === 403){
+                errMsg = "Authentication is needed";
+                needAuth = true;
+            }
+            else{
+                errMsg = 'Something went wrong, try again';
+            }
+            setAlertMsg(errMsg);
+            needAuth && navigate('/login', {state: {from: location}});
         }
         finally{
             setTimeout(()=> setAlertMsg(''), 1500);
@@ -267,7 +299,6 @@ function IntentForm() {
         setShowDelete(false);
         try{
             const response = await axiosPrivate.delete(DELETE_URL);
-            console.log(response);
             const {description} = response.data;
             setSuccessFlag(false); //To set red background
             setAlertMsg(description);
@@ -281,19 +312,18 @@ function IntentForm() {
         catch(err){
             setSuccessFlag(false);
             setAlertMsg("Error Delete");
-            console.log(err);
         }
         finally{
-            setTimeout(()=> setAlertMsg(''), 800);
+            setTimeout(()=> setAlertMsg(''), 1500);
             if(isUpdate){
                 setShowSaveChanges(false);
                 setEditTag(false);
             }
         }
     }
-    return ( 
+    return (
         <>
-            <Modal 
+            <Modal
                 show={showDelete} 
                 onHide={()=>setShowDelete(false)}
                 backdrop='static'
@@ -317,7 +347,12 @@ function IntentForm() {
             </Modal>
 
             <div className="w-100 pt-3 pl-5 pr-4 p-2">
-                <Alert show={alertMsg !== ''} variant={successFlag ? "success" : "danger"} dismissible>
+                {
+                    isLoading ? (
+                        <CenterSpinner/>
+                    ) : (
+                <>
+                <Alert show={alertMsg !== ''} variant={successFlag ? "success" : "danger"}>
                     {alertMsg}
                 </Alert>
                 <form style={{gap:"1.5rem"}}
@@ -385,9 +420,12 @@ function IntentForm() {
                         <Tabs
                             defaultActiveKey="patterns"
                             id="fill-container-intents"
-                            className="mb-3"
+                            className={`mb-3 
+                                ${intentPatternErr ? 'invalid-btn-tab-patterns': ''} 
+                                ${intentResponseErr ? 'invalid-btn-tab-responses': ''}`}
                             fill>
                             <Tab
+                                className="Hello"
                                 eventKey="patterns"
                                 title="Patterns">
                                 <div>
@@ -477,6 +515,9 @@ function IntentForm() {
                         </Tabs>
                     </div>
                 </form>
+                </>
+                )
+            }
             </div>
         </>
     );

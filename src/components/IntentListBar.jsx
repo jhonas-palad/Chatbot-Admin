@@ -4,6 +4,7 @@ function IntentListBar({children}) {
         <div 
             style={{width:'360px', borderLeft:'1px solid #eee'}}
             className="
+                position-relative
                 d-flex
                 flex-column
                 align-items-stretch
