@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import Accordion from 'react-bootstrap/Accordion';
 import Button from 'react-bootstrap/Button';
 import FormControl from 'react-bootstrap/FormControl';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPenSquare, faTrash } from '@fortawesome/free-solid-svg-icons';
+
 
 function EditableText({ text, useEditText, useRemoveText }) {
     const {id, value} = text;
@@ -22,7 +21,7 @@ function EditableText({ text, useEditText, useRemoveText }) {
             setValue(value);
             return;
         }
-        value != inputValue && editText(id, inputValue);
+        value !== inputValue && editText(id, inputValue);
         
     }
     const handleRemove = () => {

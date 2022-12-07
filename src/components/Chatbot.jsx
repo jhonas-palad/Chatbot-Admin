@@ -2,8 +2,6 @@ import { useState, useEffect } from 'react'
 import MessageBox  from './MessageBox'
 import useAxiosPrivate from '../hooks/useAxiosPrivate';
 
-import Alert  from 'react-bootstrap/Alert';
-import Col from 'react-bootstrap/Col';
 import Spinner from 'react-bootstrap/Spinner';
 import Button from 'react-bootstrap/Button';
 import Toast from 'react-bootstrap/Toast';
@@ -29,7 +27,6 @@ export const Chatbot = () => {
         heading:'',
         body:''
     });
-    const [alertVariant, setAlertVariant ] = useState('success');
     const [showAlert, setShowAlert] = useState(false);
     const [ws, setWs] = useState(null);
     const [currUser] = useState({
@@ -60,6 +57,7 @@ export const Chatbot = () => {
                     setMessages(prevState => [...initialMessages, ...prevState])
                 }
             }
+            
             ws.onmessage = ({data}) => {
                 const {response, follow_up_responses} = JSON.parse(data);
                 const FupResponsesLen = follow_up_responses.length;
@@ -85,6 +83,7 @@ export const Chatbot = () => {
                         setMessages(prevState => {
                             return [newMsgResponse, ...prevState]
                         })
+                        return newMsgResponse;
                     });
  
                 }
@@ -102,7 +101,7 @@ export const Chatbot = () => {
                 ws.close();
             }
         }
-    }, [ws]);
+    }, [ws]); //eslint-disable-line
 
 
     const onSend = (chatInput) => {
@@ -131,13 +130,11 @@ export const Chatbot = () => {
                 method: 'POST'
             });
             setAlertMsg({heading: 'Yey', body: 'Chatbot successfully trained'});
-            setAlertVariant('success');
             setShowAlert(true);
         }
         catch(err){
             
             setAlertMsg({heading: 'Aww', body:'Something went wrong, try again'});
-            setAlertVariant('danger');
             setShowAlert(true);
         }
         finally{

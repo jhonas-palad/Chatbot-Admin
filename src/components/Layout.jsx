@@ -1,7 +1,4 @@
-import { useEffect } from "react";
 import { Outlet } from "react-router-dom";
-import useAuth from "../hooks/useAuth";
-
 import 'bootstrap/dist/css/bootstrap.css';
 import '../css/main.css';
 import '../css/sizing.css';
@@ -10,7 +7,6 @@ import '../css/sizing.css';
 
 
 const Layout = () => {
-    const {auth} = useAuth();
     return (
         <>
             {/* <NavigationBar/> */}

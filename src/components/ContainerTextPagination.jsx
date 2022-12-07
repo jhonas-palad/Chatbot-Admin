@@ -1,5 +1,4 @@
-import React, {useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom';
+import React from 'react'
 import Accordion from 'react-bootstrap/Accordion';
 import EditableText from './EditableText';
 import Pagination from 'react-bootstrap/Pagination';

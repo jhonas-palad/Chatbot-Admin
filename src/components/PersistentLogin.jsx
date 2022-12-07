@@ -27,7 +27,7 @@ const PersistLogin = () => {
         }else{
             setIsLoading(false);
         }
-    }, []);
+    }, []); //eslint-disable-line
 
     return (
         <>

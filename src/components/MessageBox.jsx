@@ -29,7 +29,7 @@ const MessageBox = ({ messages, currentUser, onSend, children, status }) => {
                 </div>
             </div>
         )
-    }, [messages]);
+    }, [messages]); //eslint-disable-line
     const getStatusMsg = () => {
         let msg = '';
         let className = ''

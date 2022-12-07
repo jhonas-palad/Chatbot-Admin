@@ -28,6 +28,7 @@ const Login = () => {
 
     useEffect(() => {
         // Logback if the user is still loggedin 
+        console.log(from);
         const logBack = async () => {
             try{
                 await refresh();
@@ -44,7 +45,7 @@ const Login = () => {
         else{
             userRef.current.focus();
         }
-    }, []);
+    }, []); //eslint-disable-line
 
     useEffect(() => {
         setErrMsg('');

@@ -43,7 +43,6 @@ function IntentForm() {
     const [intentResponse, setIntentResponse] = useState('');
     const [intentFollowUpResponse, setIntentFollowUpResponse] = useState('');
 
-    const [tagErr, setTagErr] = useState('');
     const [intentPatternErr, setIntentPatternErr] = useState('');
     const [intentResponseErr, setIntentResponseErr] = useState('');
 
@@ -118,7 +117,7 @@ function IntentForm() {
         }
         isUpdate && getIntentData();
 
-    }, [urlParams]);
+    }, [urlParams]); //eslint-disable-line
 
     useEffect(()=>{
         
@@ -131,7 +130,8 @@ function IntentForm() {
         else{
             setShowSaveChanges(false);
         }
-    }, [tag]);
+    }, [tag]); //eslint-disable-line
+    
     useEffect(()=>{
         setIntentPatternErr('');
     },[intentPatterns]);

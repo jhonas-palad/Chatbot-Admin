@@ -12,7 +12,6 @@ import Chatbot from './components/Chatbot';
 import { Routes, Route } from 'react-router-dom';
 
 import IntentList from './components/IntentList';
-import axios  from "./api/axios";
 
 
 function App() {

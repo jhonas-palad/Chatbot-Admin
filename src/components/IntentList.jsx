@@ -40,7 +40,7 @@ function IntentList() {
             }
         }
         getIntents();
-    }, []);
+    }, []); //eslint-disable-line
 
     useEffect(()=>{
         const makeList = () => {
@@ -77,7 +77,7 @@ function IntentList() {
     return ( 
         <>
             {
-                pathname == '/intent/'? (
+                pathname === '/intent/'? (
                     <MsgBlock msg="You can create and modify intents on the left panel" />
                 ) : (
                     <Outlet/>

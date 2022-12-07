@@ -14,7 +14,7 @@ import Spinner  from "react-bootstrap/Spinner";
 const USER_REGEX = /^[a-zA-Z][a-zA-Z0-9-_]{3,23}$/;
 const PWD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$]).{8,24}$/;
 const REGISTER_URL = '/auth/register';
-const NAME_REGEX = /^[a-zA-Z\ ]+$/;
+const NAME_REGEX = /^[a-zA-Z\ ]+$/; //eslint-disable-line
 
 //TODO
 //ERROR MESSAGES 
@@ -37,13 +37,12 @@ const Register = () => {
     const [validPwd, setValidPwd] = useState(false);
 
     const [secretPass, setSecretPass] = useState('');
-    const [validSecret, setValidSecret] = useState(true);
+    const [validSecret] = useState(true);
 
     const [matchPwd, setMatchPwd] = useState('');
     const [validMatch, setValidMatch] = useState(false);
 
     const [errMsg, setErrMsg] = useState([]);
-    const [setSuccess] = useState(false);
 
     const [isLoading, setIsLoading] = useState(false);
     //Set the focus of user input field when the component loads.
@@ -57,19 +56,19 @@ const Register = () => {
             const result = USER_REGEX.test(username);
             setValidUsername(result);
         }   
-    }, [username]);
+    }, [username, freshSubmit]);
     useEffect(()=>{
         if(!freshSubmit){
             const result = NAME_REGEX.test(firstName);
             setValidFirstName(result);
         }   
-    }, [firstName]);
+    }, [firstName, freshSubmit]);
     useEffect(()=>{
         if(!freshSubmit){
             const result = NAME_REGEX.test(lastName);
             setValidLastName(result);
         }   
-    }, [lastName]);
+    }, [lastName, freshSubmit]);
 
 
     //Synchronize pwd and matchPwd every time they changes.
@@ -77,10 +76,10 @@ const Register = () => {
         if(!freshSubmit){
             const result = PWD_REGEX.test(pwd);
             setValidPwd(result);
+            const isMatch = matchPwd === pwd;
+            setValidMatch(isMatch);
         }
-        const isMatch = matchPwd === pwd;
-        setValidMatch(isMatch);
-    }, [pwd, matchPwd]);
+    }, [pwd, matchPwd, freshSubmit]);
 
     //Clear the error messages
     useEffect(()=>{
@@ -98,17 +97,15 @@ const Register = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         const validatedUsername = USER_REGEX.test(username);
-        const validatedPwd = PWD_REGEX.test(pwd);
+        const validatedPwd = matchPwd === pwd && PWD_REGEX.test(pwd);
         const validatedFirstName = NAME_REGEX.test(firstName);
         const validatedLastName = NAME_REGEX.test(lastName);
 
-        setValidFirstName(validatedFirstName);
-        setValidLastName(validatedLastName);
-        setValidUsername(validatedUsername);
-        setValidPwd(validatedPwd);
+        // setValidFirstName(validatedFirstName);
+        // setValidLastName(validatedLastName);
+        // setValidUsername(validatedUsername);
+        // setValidPwd(validatedPwd);
 
-        console.log(validatedFirstName);
-        console.log(validatedLastName);
         if(!validatedUsername  || 
             !validatedPwd       || 
             !validatedFirstName || 
@@ -118,12 +115,6 @@ const Register = () => {
             return;
         }
 
-        if(pwd !== matchPwd){
-            setValidMatch(false);
-            return;
-        }else{
-            setValidMatch(true);
-        }
         const clearInputFields = () => {
             setFirstName('');
             setLastName('');
@@ -279,7 +270,7 @@ return (
                     autoComplete="off"
                     placeholder="Confirm password"
                     required
-                    className={validMatch ? 'is-valid': 'is-invalid'}
+                    className={freshSubmit ? '' : validMatch ? 'is-valid': 'is-invalid'}
                 />
                 <label htmlFor="matchPwdInput">
                     Confirm Password
