@@ -49,6 +49,12 @@ export const Chatbot = () => {
             }
         }
     }, []);
+    const createMsg = (text, member) => {
+        return {
+            member,
+            text
+        }
+    }
     useEffect( ()=>{
         if(ws){
             ws.onopen = (event) => {
@@ -59,34 +65,26 @@ export const Chatbot = () => {
             }
             
             ws.onmessage = ({data}) => {
-                const {response, follow_up_responses} = JSON.parse(data);
-                const FupResponsesLen = follow_up_responses.length;
+                const {text, options} = JSON.parse(data);
+     
                 setMessages(prevState => {
-                    let newMsgResponse = {
-                        member:BOT,
-                        text: response
-                    }
-                    if(FupResponsesLen === 0){
-                        newMsgResponse.time = new Date().toLocaleTimeString();
-                    }
-                    return [newMsgResponse, ...prevState]
+                    const newMsgs = text.map((value, index)=> {
+                        let msg = createMsg(value,BOT);
+                        if(index === 0){
+                            msg.time = new Date().toLocaleTimeString();
+                        }
+                        
+                        if (options){
+                            let optionTitles = Object.keys(options);
+                            const optionList = optionTitles.map((title)=> ({title, text:options[title]['text']}))
+                    
+                            msg.options = optionList;
+                        }
+                         
+                        return msg;
+                    })
+                    return [...newMsgs, ...prevState]
                 });
-                if(follow_up_responses){
-                    follow_up_responses.map((value, index) => {
-                        let newMsgResponse = {
-                            member:BOT,
-                            text: value
-                        }
-                        if(FupResponsesLen - 1 === index){
-                            newMsgResponse.time = new Date().toLocaleTimeString();
-                        }
-                        setMessages(prevState => {
-                            return [newMsgResponse, ...prevState]
-                        })
-                        return newMsgResponse;
-                    });
- 
-                }
             }
             ws.onclose = (event) => {
                 setStatus(2)
@@ -106,6 +104,7 @@ export const Chatbot = () => {
 
     const onSend = (chatInput) => {
         const message = {
+            type: 'msg',
             text:chatInput,
             member:currUser,
             time: new Date().toLocaleTimeString()
@@ -147,7 +146,9 @@ export const Chatbot = () => {
         <section className="d-flex flex-column justify-content-center align-items-center">
             <MessageBox
                 messages = {messages}
+                setMessages = {setMessages}
                 currentUser = {currUser}
+                botUser = {BOT}
                 onSend={onSend}
                 status={status}
             >

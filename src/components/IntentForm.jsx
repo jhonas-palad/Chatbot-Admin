@@ -1,16 +1,20 @@
 import React, { useEffect, useState, useContext } from 'react';
 import useAxiosPrivate from '../hooks/useAxiosPrivate';
 import uid from 'react-uuid';
-import ContainerFormGroup from './ContainerFormGroup';
+import ContainerFormTab from './ContainerFormTab';
+import ContainerPagination from './ContainerPagination';
+import {EntityFormGroup} from './ContainerFormGroup';
+
 import IntentContext from '../context/IntentProvider';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import ContainerTextPagination from './ContainerTextPagination';
+
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEllipsis } from '@fortawesome/free-solid-svg-icons'
 
 import CenterSpinner from './CenterSpinner';
 
+import Accordion from 'react-bootstrap/Accordion';
 import Alert from 'react-bootstrap/Alert';
 import Button from 'react-bootstrap/Button';
 import Dropdown from 'react-bootstrap/Dropdown'
@@ -18,6 +22,8 @@ import DropdownButton from 'react-bootstrap/DropdownButton';
 import Modal from 'react-bootstrap/Modal';
 import Tab from 'react-bootstrap/Tab';
 import Tabs from 'react-bootstrap/Tabs';
+import Form  from 'react-bootstrap/Form';
+import EditableEntity from './EditableEntity';
 
 
 const CREATE_URL = '/intent/create';
@@ -41,19 +47,21 @@ function IntentForm() {
 
     const [intentPattern, setIntentPattern] = useState('');
     const [intentResponse, setIntentResponse] = useState('');
-    const [intentFollowUpResponse, setIntentFollowUpResponse] = useState('');
+    const [intentEntityTitle, setIntentEntityTitle ] = useState('');
+    const [intentEntityText, setIntentEntityText ] = useState('');
 
     const [intentPatternErr, setIntentPatternErr] = useState('');
     const [intentResponseErr, setIntentResponseErr] = useState('');
 
     const [intentPatterns, setIntentPatterns] = useState([]);
     const [intentResponses, setIntentResponses] = useState([]);
-    const [intentFollowUpResponses, setIntentFollowUpResponses] = useState([]);
-    
+    const [intentEntities, setIntentEntities] = useState([]);
+
     const [origTag, setOrigTag] = useState('');
     const [origPatterns, setOrigPatterns] = useState([]);
     const [origResponses, setOrigResponses] = useState([]);
-    const [origFollowUpResponses, setOrigFollowUpResponses] = useState([]);
+    const [origEntities, setOrigEntities] = useState([]);
+    
 
     const [showSaveChanges, setShowSaveChanges] = useState(false);
     const [showDelete, setShowDelete] = useState(false);
@@ -63,40 +71,63 @@ function IntentForm() {
 
     const [patternsCurrentPage, setPatternCurrentPage] = useState(1);
     const [responsesCurrentPage, setResponsesCurrentPage] = useState(1);
-    const [fupResponsesCurrentPage, setFupResponsesCurrentPage] = useState(1);
+    const [entitiesCurrentPage, setEntitiesCurrentPage] = useState(1);
+
+    const [currentPatternElements, setCurrentPatternElements] = useState([]);
+    const [currentResponseElements, setCurrentResponseElements ] = useState([]);
+    const [currentEntityElements, setCurrentEntityElements] = useState([]);
 
     const [ isLoading, setIsLoading ] = useState(false);
 
     const axiosPrivate = useAxiosPrivate();
 
-    const makeUID = (container) => {
-        return container.map( value => ({id: uid(value), value}));
+    const makeUID = (container, destructure = false) => {
+        if(!container){
+            return [];
+        }
+
+        return container.map( value => {
+            if(destructure){
+                return {
+                    id: uid(value),
+                    ...value
+                }
+            }
+            else {
+                return {
+                    id: uid(value),
+                    value
+                }
+            }
+        });
     }
     useEffect(() => {
         const getIntentData = async () => {
             setIsLoading(true);
             try{
-                const response = await axiosPrivate(
+                const axios_response = await axiosPrivate(
                     GET_URL
                 );
-                const {data} = response?.data;
+                
+                const {data} = axios_response?.data;
                 const patterns = makeUID(data.patterns);
                 const responses = makeUID(data.responses);
-                const follow_up_responses = makeUID(data.follow_up_responses);
+                const entities = makeUID(data.entities, true);
+                console.log(entities);
                 setTag(data.tag);
                 setIntentPatterns(patterns);
                 setIntentResponses(responses);
-                setIntentFollowUpResponses(follow_up_responses);
+                setIntentEntities(entities);
 
                 setOrigTag(data.tag);
                 setOrigPatterns(patterns);
                 setOrigResponses(responses);
-                setOrigFollowUpResponses(follow_up_responses);
-                
+                setOrigEntities(entities);
             }
             catch(err){
                 let errMsg = '';
                 let needAuth = false;
+                console.log(err);
                 if(!err?.response){
                     errMsg = "No response from the server, make sure you have network connection"
                 }
@@ -139,29 +170,37 @@ function IntentForm() {
     useEffect(()=>{
         setIntentResponseErr('');
     },[intentResponses]);
-
+    useEffect(()=>{
+        console.log(intentEntities);
+        console.log(origEntities);
+    }, [intentEntities]);
     useEffect(()=>{
         //Reset all pages
         setPatternCurrentPage(1);
         setResponsesCurrentPage(1);
-        setFupResponsesCurrentPage(1);
+        setEntitiesCurrentPage(1);
     }, [id]);
 
     const compareContainer = (container1, container2) => {
         const len1 = container1.length;
         const len2 = container2.length;
-
         return len1 === len2 && container1.every(({value}, index) => {
             return value === container2[index].value; 
         });
     }
-    const addText = (input, setInputCallBack, setStateCallback) => {
+    const addText = (input, setStateCallback) => {
+        console.log(input);
         if(!input || /^\s*$/.test(input)){
             return;
         }
         const text = { id: uid(input) , value: input.trim() };
         setStateCallback( prev => [text, ...prev]);
-        setInputCallBack('');
+        isUpdate && setShowSaveChanges(true);
+    }
+    const addEntity = (title, text) => {
+        title = title.trim();
+        text = text.trim();
+        setIntentEntities(prev => [{id: uid(title), title, text}, ...prev]);
         isUpdate && setShowSaveChanges(true);
     }
     const handleEditText = (container, setContainer, origContainer) => {
@@ -174,9 +213,37 @@ function IntentForm() {
             containerCopy[index] = {id, value:newValue.trim()};
             setContainer(containerCopy);
             let same = isUpdate && compareContainer(origContainer, containerCopy);
-            isUpdate && same ? setShowSaveChanges(false) : setShowSaveChanges(true);
+            if(isUpdate){
+                same ? setShowSaveChanges(false) : setShowSaveChanges(true);
+            }
+        
         }
         return editText;
+    }
+    const handleEditEntity = (id, {newTitle, newText}) => {
+        const entitiesCopy = [...intentEntities];
+        const index = entitiesCopy.findIndex(value => value.id === id);
+        const prevState = entitiesCopy[index];
+        const {title, text} = prevState;
+        if(!newTitle || /^\s*$/.test(newTitle)){
+            newTitle = title;
+        }
+        if(!newText || /^\s*$/.test(newText)){
+            newText = text;
+        }
+        
+        if(newTitle === title && newText === text){
+            return;
+        }
+        const newObj = {...prevState, title:newTitle.trim(), text:newText.trim()};
+        entitiesCopy[index] = newObj;
+        setIntentEntities(entitiesCopy);
+        
+        let same = isUpdate && origEntities.every((element,index) => JSON.stringify(element) === JSON.stringify(entitiesCopy[index]));
+        if(isUpdate){
+            same ? setShowSaveChanges(false) : setShowSaveChanges(true);
+        }
+
     }
     const handleRemoveText = (container, setContainer, origContainer) => {
         const removeText = (id) => {
@@ -207,16 +274,12 @@ function IntentForm() {
         const tagValue = tag;
         const intentPatternValues = extractValues(intentPatterns);
         const intentResponsesValues = extractValues(intentResponses);
-        let intentFollowUpResponsesValues = extractValues(intentFollowUpResponses);
 
         if (!intentPatternValues){
             setIntentPatternErr('You should add at least one pattern');
         }
         if (!intentResponsesValues){
             setIntentResponseErr('You should add at least one response');
-        }
-        if(!intentFollowUpResponsesValues){
-            intentFollowUpResponsesValues = [];
         }
 
         if(!intentPatternValues || !intentResponsesValues){
@@ -227,7 +290,7 @@ function IntentForm() {
             tag: tagValue,
             patterns: intentPatternValues,
             responses: intentResponsesValues,
-            follow_up_responses: intentFollowUpResponsesValues
+            entities: intentEntities
         });
 
         const config = {
@@ -251,7 +314,7 @@ function IntentForm() {
                 const {data} = response?.data;
                 const patterns = makeUID(data.patterns);
                 const responses = makeUID(data.responses);
-                const follow_up_responses = makeUID(data.follow_up_responses);
+                const entities = makeUID(data.entities, true);
                 
                 //Sync the tag name in the list
                 if(origTag !== tag){
@@ -263,7 +326,7 @@ function IntentForm() {
                 setOrigTag(data.tag);
                 setOrigPatterns(patterns);
                 setOrigResponses(responses);
-                setOrigFollowUpResponses(follow_up_responses);
+                setOrigResponses(entities);
             }
             setSuccessFlag(true);
             setAlertMsg(response.data.description);
@@ -273,7 +336,7 @@ function IntentForm() {
             let errMsg = '';
             let needAuth = false;
             if(!err?.response){
-                errMsg = "No response from the server, make sure you have network connection"
+                errMsg = "No response from the server, make sure you have internet connection"
             }
             else if(err.response?.status === 403){
                 errMsg = "Authentication is needed";
@@ -425,92 +488,104 @@ function IntentForm() {
                                 ${intentResponseErr ? 'invalid-btn-tab-responses': ''}`}
                             fill>
                             <Tab
-                                className="Hello"
                                 eventKey="patterns"
                                 title="Patterns">
-                                <div>
-                                    <ContainerFormGroup 
-                                        label="Pattern"
-                                        inputState={intentPattern}
-                                        onChange={setIntentPattern}
-                                        setContainer={setIntentPatterns}
-                                        buttonClick={addText}
-                                        errMsg={intentPatternErr}
-                                    />
-                                    <ContainerTextPagination
-                                        useContainerState ={() => ({
-                                            container: intentPatterns, 
+                                    <ContainerFormTab
+                                        useFormGroupProps={ ()=>({
+                                            label:"Pattern",
+                                            buttonClick:addText,
+                                            errMsg: intentPatternErr,
+                                            setShowSaveChanges
+                                        })}
+                                        useContainerState = {()=>({
+                                            container: intentPatterns,
+                                            origContainer: origPatterns,
                                             setContainer: setIntentPatterns
                                         })}
-                                        origContainer = {origPatterns} //Used for editing a particular row
-                                        handleEditText={ handleEditText }
-                                        handleRemoveText={ handleRemoveText }
-                                        setShowSaveChanges={ setShowSaveChanges }
                                         itemsPerPage={ 5 }
                                         useCurrentPageState={()=>({
-                                            currentPage: patternsCurrentPage, 
-                                            setCurrentPage: setPatternCurrentPage
+                                            currentPage: patternsCurrentPage,
+                                            currentElements: currentPatternElements,
+                                            setCurrentPage: setPatternCurrentPage,
+                                            setCurrentElements: setCurrentPatternElements 
+                                        })}
+                                        useEditTextCallback={()=>({
+                                            handleEditText,
+                                            handleRemoveText
                                         })}
                                     />
-                                </div>
                             </Tab>
                             <Tab
                                 eventKey="responses"
                                 title="Responses">
-                                <div>
-                                    <ContainerFormGroup
-                                        label="Response"
-                                        inputState={intentResponse}
-                                        onChange={setIntentResponse}
-                                        setContainer={setIntentResponses}
-                                        buttonClick={addText}
-                                        errMsg={intentResponseErr}
-                                    />
-                                    <ContainerTextPagination
-                                        useContainerState ={() => ({
-                                            container: intentResponses, 
+                                    <ContainerFormTab
+                                        useFormGroupProps={ ()=>({
+                                            label:"Responses",
+                                            buttonClick: addText,
+                                            errMsg: intentResponseErr,
+                                            setShowSaveChanges
+                                        })}
+                                        useContainerState = {()=>({
+                                            container: intentResponses,
+                                            origContainer: origResponses,
                                             setContainer: setIntentResponses
                                         })}
-                                        origContainer = {origResponses} //Used for editing a particular row
-                                        handleEditText={ handleEditText }
-                                        handleRemoveText={ handleRemoveText }
-                                        setShowSaveChanges={ setShowSaveChanges }
                                         itemsPerPage={ 5 }
                                         useCurrentPageState={()=>({
-                                            currentPage:responsesCurrentPage, 
-                                            setCurrentPage:setResponsesCurrentPage
+                                            currentPage: responsesCurrentPage,
+                                            currentElements: currentResponseElements,
+                                            setCurrentPage: setResponsesCurrentPage,
+                                            setCurrentElements: setCurrentResponseElements 
+                                        })}
+                                        useEditTextCallback={()=>({
+                                            handleEditText,
+                                            handleRemoveText
                                         })}
                                     />
-                                </div>
                             </Tab>
                             <Tab
-                                eventKey="follow_up_responses"
-                                title="Follow Up Responses">
-                                <div>
-                                    <ContainerFormGroup
-                                        label="Follow up response"
-                                        inputState={intentFollowUpResponse}
-                                        onChange={setIntentFollowUpResponse}
-                                        setContainer={setIntentFollowUpResponses}
-                                        buttonClick={addText}
-                                        errMsg=''
+                                eventKey="entities"
+                                title="Entities">
+                                    <EntityFormGroup
+                                        buttonClick={addEntity}
                                     />
-                                    <ContainerTextPagination
-                                        useContainerState ={() => ({
-                                            container: intentFollowUpResponses, 
-                                            setContainer: setIntentFollowUpResponses
-                                        })}
-                                        origContainer = {origFollowUpResponses} //Used for editing a particular row
-                                        handleEditText={ handleEditText }
-                                        handleRemoveText={ handleRemoveText }
-                                        setShowSaveChanges={ setShowSaveChanges }
-                                        itemsPerPage={ 5 }
+                                    <ContainerPagination
+                                        container={intentEntities}
+                                        itemsPerPage={5}
                                         useCurrentPageState={()=>({
-                                            currentPage:fupResponsesCurrentPage, 
-                                            setCurrentPage:setFupResponsesCurrentPage
+                                            currentPage: entitiesCurrentPage,
+                                            currentElements: currentEntityElements,
+                                            setCurrentPage: setEntitiesCurrentPage,
+                                            setCurrentElements: setCurrentEntityElements
                                         })}
-                                    />
-                                </div>
+                                    >
+                                        {   currentEntityElements.length === 0 ? <p>Add an entity</p>: (
+                                            currentEntityElements.map((entity, index) => 
+                                                <Accordion.Item eventKey={index.toString()} key={entity.id}>
+                                                    <Accordion.Header
+                                                        className='w-100'>
+                                                            <span style={{maxWidth:'450px', fontWeight:'300'}} className="d-inline-block text-truncate">
+                                                                Title: {entity.title}
+                                                            </span>
+                                                    </Accordion.Header>
+                                                    <EditableEntity
+                                                        entity={
+                                                            {
+                                                                id: entity.id,
+                                                                text: entity.text,
+                                                                title: entity.title
+                                                            }
+                                                        }
+                                                        editEntity={handleEditEntity}
+                                                        useRemoveText={() => handleRemoveText(intentEntities, setIntentEntities, origEntities)}
+                                                    />
+
+                                                </Accordion.Item>
+                                            ))
+
+                                        }
+                                    </ContainerPagination>
+                                
                             </Tab>
                         </Tabs>
                     </div>

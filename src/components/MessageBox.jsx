@@ -1,12 +1,29 @@
 import { useCallback } from 'react';
 import { MessageInput } from './MessageInput';
+
+import Button from 'react-bootstrap/Button';
 import Card from 'react-bootstrap/Card';
 import uuid from 'react-uuid';
-const MessageBox = ({ messages, currentUser, onSend, children, status }) => {
+const MessageBox = ({ messages,setMessages, botUser,currentUser, onSend, children, status }) => {
+    const handleOptionClick = ({title, text}) => {
+        setMessages(prevState => {
+            const msg = {
+                text: title,
+                member:currentUser,
+                time: new Date().toLocaleTimeString()
+            }
+            const response = {
+                text,
+                member:botUser,
+                time: new Date().toLocaleTimeString()
+            }
+            return [response,msg, ...prevState];
+        });
 
+    }
 
     const renderMessage = useCallback((message) => {
-        const { member, text } = message;
+        const { member, text, options} = message;
         const time = message?.time;
         const messageFromMe = member.id === currentUser.id;
         
@@ -14,10 +31,22 @@ const MessageBox = ({ messages, currentUser, onSend, children, status }) => {
             "justify-content-end" : "justify-content-start";
         return(
             <div key={uuid()} className={`d-flex flex-row ${className} align-items-center`}>
-                <div className="d-flex flex-column"style={{maxWidth:'500px'}}>
-                    <p style={{textAlign: 'justify'}}className={`small p-3 mb-${time ? '0': '1'} text-white ${!time ? 'rounded-4' : messageFromMe ? 'rounded-msg-self-last' : 'rounded-msg-other-last'} bg-${messageFromMe ? 'primary': 'warning'}`}>
+                <div className="d-flex flex-column ">
+                    <pre style={{ maxWidth:'500px'}}className={`small p-3 mb-${time && !options ? '0': '1'} text-white ${!time ? 'rounded-4' : messageFromMe ? 'rounded-msg-self-last' : 'rounded-msg-other-last'} bg-${messageFromMe ? 'primary': 'warning'}`}>
                         {text}
-                    </p>
+                    </pre>
+                    {
+                        options ?  options.map(option => 
+                                <Button key={uuid()} 
+                                    variant="secondary"
+                                    onClick={()=> handleOptionClick(option)}
+                                    className="mb-1">
+                                        {option.title}
+                                </Button>
+                                ) : (
+                            <></>
+                        )
+                    }
                     <span 
                         className={`align-self-${messageFromMe ? 'end' : 'start'}`}
                         style={{

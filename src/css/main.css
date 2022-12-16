@@ -18,6 +18,14 @@ hr{
     opacity: .25;
 }
 
+pre {
+    overflow-x: auto;
+    white-space: pre-wrap;
+    white-space: -moz-pre-wrap;
+    white-space: -pre-wrap;
+    white-space: -o-pre-wrap;
+    word-wrap: break-word;
+  }
 /* .intent-width-center{
     width: calc(100% - 360px - 280px);
 } */

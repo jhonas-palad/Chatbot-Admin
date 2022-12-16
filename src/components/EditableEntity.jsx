@@ -1,15 +1,18 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import Accordion from 'react-bootstrap/Accordion';
 import Button from 'react-bootstrap/Button';
 import FormControl from 'react-bootstrap/FormControl';
 
-
-function EditableText({ text, useEditText, useRemoveText}) {
-    const {id, value} = text;
+const EditableEntity = ({ 
+    entity, 
+    editEntity, 
+    useRemoveText
+}) => {
+    const {id, text, title} = entity;
     const [isEdit, setIsEdit] = useState(false);
-    const [inputValue, setValue] = useState(value);
+    const [titleInput, setTitleInput] = useState(title);
+    const [textInput, setTextInput] = useState(text);
 
-    const editText = useEditText();
     const removeText = useRemoveText();
 
     const handleEdit = () => {
@@ -17,12 +20,15 @@ function EditableText({ text, useEditText, useRemoveText}) {
     }
     const handleSave = () => {
         setIsEdit(false);
-        if(!inputValue){
-            setValue(value);
-            return;
+        if(!titleInput){
+            setTitleInput(title);
         }
-        value !== inputValue && editText(id, inputValue);
-        
+        if(!textInput){
+            setTextInput(text);
+        }
+        if(title !== titleInput || text !== textInput){
+            editEntity(id, {newTitle: titleInput, newText:textInput});
+        }
     }
     const handleRemove = () => {
         removeText(id);
@@ -30,13 +36,20 @@ function EditableText({ text, useEditText, useRemoveText}) {
     return (
 
         <Accordion.Body>
+            <FormControl
+                type="text"
+                className = "input-underline no-outline"
+                value={titleInput}
+                onChange={(e)=>setTitleInput(e.target.value)}
+                disabled={!isEdit}
+            />
             <FormControl 
                 as="textarea"
                 rows={5} 
                 type="text"
                 className="input-underline no-outline"
-                value={inputValue}
-                onChange={(e) => setValue(e.target.value)}
+                value={textInput}
+                onChange={(e) => setTextInput(e.target.value)}
                 disabled={!isEdit}
             />
             <div style={{gap:"1rem"}}className="mt-3 d-flex justify-content-end">
@@ -55,4 +68,4 @@ function EditableText({ text, useEditText, useRemoveText}) {
     );
 }
 
-export default EditableText;
+export default EditableEntity;
