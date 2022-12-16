@@ -1,6 +1,5 @@
 import { useEffect } from 'react'
 import Accordion from 'react-bootstrap/Accordion';
-import EditableText from './EditableText';
 import Pagination from 'react-bootstrap/Pagination';
 
 const ContainerPagination = ({
@@ -21,7 +20,7 @@ const ContainerPagination = ({
   
     useEffect(()=>{
         setCurrentElements(container.slice(indexOfFirstItem, indexOfLastItem));
-    }, [container, currentPage]);
+    }, [container, currentPage]); //eslint-disable-line
 
     const paginate = pageNumber => setCurrentPage(pageNumber);
     

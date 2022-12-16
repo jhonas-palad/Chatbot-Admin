@@ -22,7 +22,6 @@ import DropdownButton from 'react-bootstrap/DropdownButton';
 import Modal from 'react-bootstrap/Modal';
 import Tab from 'react-bootstrap/Tab';
 import Tabs from 'react-bootstrap/Tabs';
-import Form  from 'react-bootstrap/Form';
 import EditableEntity from './EditableEntity';
 
 
@@ -44,11 +43,6 @@ function IntentForm() {
     const [editTag, setEditTag] = useState(false);
 
     const { intents, setIntents } = useContext(IntentContext);
-
-    const [intentPattern, setIntentPattern] = useState('');
-    const [intentResponse, setIntentResponse] = useState('');
-    const [intentEntityTitle, setIntentEntityTitle ] = useState('');
-    const [intentEntityText, setIntentEntityText ] = useState('');
 
     const [intentPatternErr, setIntentPatternErr] = useState('');
     const [intentResponseErr, setIntentResponseErr] = useState('');
@@ -170,10 +164,7 @@ function IntentForm() {
     useEffect(()=>{
         setIntentResponseErr('');
     },[intentResponses]);
-    useEffect(()=>{
-        console.log(intentEntities);
-        console.log(origEntities);
-    }, [intentEntities]);
+ 
     useEffect(()=>{
         //Reset all pages
         setPatternCurrentPage(1);
