@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const DEPLOYMENT_URL = 'http://139.162.105.247/';
+const DEPLOYMENT_URL = 'https://chatbotapi.site/';
 export default axios.create({
     baseURL: DEPLOYMENT_URL
 });

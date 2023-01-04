@@ -15,7 +15,7 @@ const initialMessages = [
     {member: BOT, text: 'You can test me here on this chat', time: new Date().toLocaleTimeString()},
     {member: BOT, text: 'Hello there!'}
 ]
-const WS_URL = 'ws://139.162.105.247/chat';
+const WS_URL = 'wss://chatbotapi.site/chat';
 const TRAINBOT_URL = '/intent/train_bot';
 
 export const Chatbot = () => {
