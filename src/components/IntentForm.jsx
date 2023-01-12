@@ -8,6 +8,8 @@ import {EntityFormGroup} from './ContainerFormGroup';
 import IntentContext from '../context/IntentProvider';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 
+import { isEmptyString, isAllAlphaNumeric } from '../utils/validators';
+import { makeUID, compareContainer } from '../utils/container';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEllipsis } from '@fortawesome/free-solid-svg-icons'
@@ -19,6 +21,7 @@ import Alert from 'react-bootstrap/Alert';
 import Button from 'react-bootstrap/Button';
 import Dropdown from 'react-bootstrap/Dropdown'
 import DropdownButton from 'react-bootstrap/DropdownButton';
+import Form from 'react-bootstrap/Form';
 import Modal from 'react-bootstrap/Modal';
 import Tab from 'react-bootstrap/Tab';
 import Tabs from 'react-bootstrap/Tabs';
@@ -41,6 +44,7 @@ function IntentForm() {
 
     const [tag, setTag] = useState('');
     const [editTag, setEditTag] = useState(false);
+    const [tagErr, setTagErr] = useState('');
 
     const { intents, setIntents } = useContext(IntentContext);
 
@@ -75,39 +79,17 @@ function IntentForm() {
 
     const axiosPrivate = useAxiosPrivate();
 
-    const makeUID = (container, destructure = false) => {
-        if(!container){
-            return [];
-        }
-
-        return container.map( value => {
-            if(destructure){
-                return {
-                    id: uid(value),
-                    ...value
-                }
-            }
-            else {
-                return {
-                    id: uid(value),
-                    value
-                }
-            }
-        });
-    }
+    
     useEffect(() => {
         const getIntentData = async () => {
             setIsLoading(true);
             try{
-                const axios_response = await axiosPrivate(
-                    GET_URL
-                );
-                
+                const axios_response = await axiosPrivate(GET_URL);
+
                 const {data} = axios_response?.data;
                 const patterns = makeUID(data.patterns);
                 const responses = makeUID(data.responses);
                 const entities = makeUID(data.entities, true);
-                console.log(entities);
                 setTag(data.tag);
                 setIntentPatterns(patterns);
                 setIntentResponses(responses);
@@ -121,7 +103,6 @@ function IntentForm() {
             catch(err){
                 let errMsg = '';
                 let needAuth = false;
-                console.log(err);
                 if(!err?.response){
                     errMsg = "No response from the server, make sure you have network connection"
                 }
@@ -172,21 +153,18 @@ function IntentForm() {
         setEntitiesCurrentPage(1);
     }, [id]);
 
-    const compareContainer = (container1, container2) => {
-        const len1 = container1.length;
-        const len2 = container2.length;
-        return len1 === len2 && container1.every(({value}, index) => {
-            return value === container2[index].value; 
-        });
-    }
-    const addText = (input, setStateCallback) => {
-        console.log(input);
-        if(!input || /^\s*$/.test(input)){
-            return;
+    
+    const addText = (input, setStateCallback, setErrState = null) => {
+        if (isEmptyString(input)) return false;
+
+        if (setErrState && !isAllAlphaNumeric(input)){
+            setErrState('Input should only contain alphanumeric values.');
+            return false;
         }
         const text = { id: uid(input) , value: input.trim() };
         setStateCallback( prev => [text, ...prev]);
         isUpdate && setShowSaveChanges(true);
+        return true;
     }
     const addEntity = (title, text) => {
         title = title.trim();
@@ -196,9 +174,7 @@ function IntentForm() {
     }
     const handleEditText = (container, setContainer, origContainer) => {
         const editText = (id, newValue) => {
-            if(!newValue || /^\s*$/.test(newValue)){
-                return;
-            }
+            if(isEmptyString(newValue)) return;
             const containerCopy = [...container];
             const index = containerCopy.findIndex(value => value.id === id);
             containerCopy[index] = {id, value:newValue.trim()};
@@ -207,7 +183,6 @@ function IntentForm() {
             if(isUpdate){
                 same ? setShowSaveChanges(false) : setShowSaveChanges(true);
             }
-        
         }
         return editText;
     }
@@ -216,13 +191,12 @@ function IntentForm() {
         const index = entitiesCopy.findIndex(value => value.id === id);
         const prevState = entitiesCopy[index];
         const {title, text} = prevState;
-        if(!newTitle || /^\s*$/.test(newTitle)){
+        if(isEmptyString(newTitle)){
             newTitle = title;
         }
-        if(!newText || /^\s*$/.test(newText)){
+        if(isEmptyString(newText)){
             newText = text;
         }
-        
         if(newTitle === title && newText === text){
             return;
         }
@@ -258,11 +232,20 @@ function IntentForm() {
         const isEmptyContainer = (container) => {
             return container.length === 0;
         }
-        if(!tag || /^\s*$/.test(tag)){
+        if (isEmptyString(tag)) {
+            setTagErr('Please enter a tag.');
             return;
+        }else{
+            setTagErr('');
+        }
+        if (!isAllAlphaNumeric(tag)) {
+            setTagErr('Tag must only contain alphanumeric values.');
+            return;
+        }else{
+            setTagErr('');
         }
 
-        const tagValue = tag;
+        const tagValue = tag.trim();
         const intentPatternValues = extractValues(intentPatterns);
         const intentResponsesValues = extractValues(intentResponses);
 
@@ -293,8 +276,6 @@ function IntentForm() {
             },
             data: JSONData
         }
-
-
         try{
             const response = await axiosPrivate(config);
             if(!isUpdate){
@@ -332,6 +313,10 @@ function IntentForm() {
             else if(err.response?.status === 403){
                 errMsg = "Authentication is needed";
                 needAuth = true;
+            }
+            else if(err.response?.status === 422){
+                errMsg = err.response.data.detail;
+                setTagErr('Tag must be uniqe');
             }
             else{
                 errMsg = 'Something went wrong, try again';
@@ -413,15 +398,14 @@ function IntentForm() {
                     onSubmit={handleSubmit} 
                     className="
                         d-flex 
-                        flex-column 
+                        flex-column
                         h-100">
-                    <div className="d-flex justify-content-between">
+                    <div className="d-flex justify-content-between align-items-center">
                         <div>
-                            <label htmlFor="tag">
+                            <Form.Label htmlFor="tag">
                                 <strong>Tag # </strong>
-                            </label>
-                            <input
-                                className="input-underline no-outline"
+                            </Form.Label>
+                            <Form.Control
                                 style={{width: '300px'}}
                                 id="tag"
                                 type="text"
@@ -429,9 +413,12 @@ function IntentForm() {
                                 placeholder="Enter Tag"
                                 onChange={(e) => setTag(e.target.value)}
                                 value={tag}
-                                required
-                                disabled={isUpdate && !editTag}
+                                disabled={isUpdate && !editTag && !tagErr}
+                                isInvalid={tagErr !==  ''}
                             />
+                            <Form.Control.Feedback type="invalid" >
+                                {tagErr}
+                            </Form.Control.Feedback>
                         </div>
                         <div style={{gap:"1rem"}}className="d-flex">
                             { showSaveChanges && <Button type="submit">Save Changes</Button>}
@@ -482,9 +469,10 @@ function IntentForm() {
                                 eventKey="patterns"
                                 title="Patterns">
                                     <ContainerFormTab
+                                        alphaNumeric={true}
                                         useFormGroupProps={ ()=>({
                                             label:"Pattern",
-                                            buttonClick:addText,
+                                            buttonClick:(input, setContainer) => addText(input, setContainer, setIntentPatternErr),
                                             errMsg: intentPatternErr,
                                             setShowSaveChanges
                                         })}
@@ -510,9 +498,10 @@ function IntentForm() {
                                 eventKey="responses"
                                 title="Responses">
                                     <ContainerFormTab
+                                        alphaNumeric = {false}
                                         useFormGroupProps={ ()=>({
                                             label:"Responses",
-                                            buttonClick: addText,
+                                            buttonClick:addText,
                                             errMsg: intentResponseErr,
                                             setShowSaveChanges
                                         })}

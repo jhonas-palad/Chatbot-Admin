@@ -6,6 +6,7 @@ import React from 'react'
 
 export const ContainerFormTab = (
     {
+      alphaNumeric,
       useFormGroupProps,
       useContainerState,
       itemsPerPage,
@@ -49,9 +50,8 @@ export const ContainerFormTab = (
                             </span>
                     </Accordion.Header>
                     <EditableText
+                        alphaNumeric={alphaNumeric}
                         text={text}
-                        useSaveFlag={() => setShowSaveChanges}
-                        container={container}
                         useEditText={() => handleEditText(container, setContainer, origContainer)}
                         useRemoveText={() => handleRemoveText(container, setContainer, origContainer)}
                     />

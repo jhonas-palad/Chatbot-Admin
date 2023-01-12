@@ -8,8 +8,8 @@ import { useState } from 'react';
 function ContainerFormGroup({ errMsg, label, setContainer, buttonClick}) {
     const [input, setInput] = useState('');
     const handleButtonClick = () => {
-        buttonClick(input, setContainer);
-        setInput('');
+        const err = !buttonClick(input, setContainer);
+        !err && input && setInput('');
     }
     return ( 
         <div className="mb-5 w-100">
@@ -28,7 +28,7 @@ function ContainerFormGroup({ errMsg, label, setContainer, buttonClick}) {
                 
                 <Form.Control
                     as="textarea"
-                    isInvalid={errMsg !== ''}
+                    isInvalid={errMsg !==  ''}
                     id={`intent-${label}`}
                     cols={150}
                     type="text"
