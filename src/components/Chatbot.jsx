@@ -1,10 +1,16 @@
 import { useState, useEffect } from 'react'
-import MessageBox  from './MessageBox'
 import useAxiosPrivate from '../hooks/useAxiosPrivate';
+import MessageBox  from './MessageBox';
+import { isFloat } from '../utils/validators';
 
 import Spinner from 'react-bootstrap/Spinner';
 import Button from 'react-bootstrap/Button';
 import Toast from 'react-bootstrap/Toast';
+
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faGears } from '@fortawesome/free-solid-svg-icons';
+
+import TrainBotModal from './TrainBotModal'
 
 const BOT = {
     id:99,
@@ -15,24 +21,28 @@ const initialMessages = [
     {member: BOT, text: 'You can test me here on this chat', time: new Date().toLocaleTimeString()},
     {member: BOT, text: 'Hello there!'}
 ]
-const WS_URL = 'wss://chatbotapi.site/chat';
-const TRAINBOT_URL = '/intent/train_bot';
+const WS_URL = 'ws://127.0.0.1:8000/chat';
+const TRAINBOT_URL = '/chatbot/train';
+const MODEL_CONFIG_URL = '/chatbot/get_config';
 
 export const Chatbot = () => {
     const axiosPrivate = useAxiosPrivate();
     const [isLoading, setIsLoading] = useState(false);
-    const [ messages, setMessages ] = useState([]);
+    const [messages, setMessages] = useState([]);
     const [status, setStatus] = useState(0);
     const [alertMsg, setAlertMsg ] = useState({
         heading:'',
         body:''
     });
+    const [showModal, setShowModal] = useState(false);
+    const [ modelConfig, setModelConfig] = useState(null);
     const [showAlert, setShowAlert] = useState(false);
     const [ws, setWs] = useState(null);
     const [currUser] = useState({
         id: 1,
         name: 'Jhonas'
     });
+
 
     const connectWS = () => {
         const new_ws = new WebSocket(WS_URL);
@@ -49,6 +59,25 @@ export const Chatbot = () => {
             }
         }
     }, []);
+    useEffect(()=>{
+        const getModelConfig = async () => {
+            try{
+                const {data} = await axiosPrivate(MODEL_CONFIG_URL);
+                // for(const key in data){
+                //     const current = data[key];
+                //     const parseMethod = isFloat(current) ? parseFloat : parseInt;
+                //     data[key] = parseMethod(current);
+                // }
+                console.log(data);
+                setModelConfig(data);
+            }
+            catch(err){
+                return {};
+            }
+        }
+        getModelConfig();
+    }, []);
+
     const createMsg = (text, member) => {
         return {
             member,
@@ -101,6 +130,10 @@ export const Chatbot = () => {
         }
     }, [ws]); //eslint-disable-line
 
+    const updateModelConfig = (data) => {
+        setModelConfig(data);
+        setWs(connectWS());
+    }
 
     const onSend = (chatInput) => {
         const message = {
@@ -117,30 +150,30 @@ export const Chatbot = () => {
             setWs(connectWS());
         }
     }
-    const handleTrainBot = async () =>{
+    // const handleTrainBot = async () =>{
 
-        const reconnect = () => {
-            ws.close();
-            setWs(connectWS());
-        }
-        setIsLoading(true);
-        try{
-            await axiosPrivate(TRAINBOT_URL, {
-                method: 'POST'
-            });
-            setAlertMsg({heading: 'Yey', body: 'Chatbot successfully trained'});
-            setShowAlert(true);
-        }
-        catch(err){
+    //     const reconnect = () => {
+    //         ws.close();
+    //         setWs(connectWS());
+    //     }
+    //     setIsLoading(true);
+    //     try{
+    //         await axiosPrivate(TRAINBOT_URL, {
+    //             method: 'POST'
+    //         });
+    //         setAlertMsg({heading: 'Yey', body: 'Chatbot successfully trained'});
+    //         setShowAlert(true);
+    //     }
+    //     catch(err){
             
-            setAlertMsg({heading: 'Aww', body:'Something went wrong, try again'});
-            setShowAlert(true);
-        }
-        finally{
-            setIsLoading(false);
-            reconnect();
-        }
-    }
+    //         setAlertMsg({heading: 'Aww', body:'Something went wrong, try again'});
+    //         setShowAlert(true);
+    //     }
+    //     finally{
+    //         setIsLoading(false);
+    //         reconnect();
+    //     }
+    // }
 
     return (
         <section className="d-flex flex-column justify-content-center align-items-center">
@@ -157,6 +190,15 @@ export const Chatbot = () => {
                         <Spinner animation="border" variant="primary" />
                     ) : (
                         <>
+                        {
+                            showModal ? 
+                                <TrainBotModal
+                                    show={showModal}
+                                    onHide={setShowModal}
+                                    modelConfig={modelConfig}
+                                    updateModelConfig={updateModelConfig}
+                                /> : (null)
+                        }
                             <Toast className="position-absolute" style={{left:'50%', transform:'translate(-50%)', top:'5px'}} delay={3000} autohide show={showAlert} position="top-end" onClose={() => setShowAlert(false)}>
                                 <Toast.Header>
                                     <strong className="me-auto">{alertMsg.heading}</strong>
@@ -164,14 +206,22 @@ export const Chatbot = () => {
                                 <Toast.Body>
                                     {alertMsg.body}
                                 </Toast.Body>
-
                             </Toast>
+                            <div>
+                                <Button 
+                                    
+                                    type="button" 
+                                    onClick={()=> setShowModal(true)}>
+                                        <span style={{marginRight:'8px'}}>
+                                            TrainBot
+                                        </span>
+                                        <span>
+                                            <FontAwesomeIcon icon={faGears}/>
 
-                            <Button 
-                                type="button" 
-                                onClick={handleTrainBot}>
-                                    TrainBot
-                            </Button>
+                                        </span>
+                                </Button>
+                            </div>
+                            
                         </>
                     )
                 }

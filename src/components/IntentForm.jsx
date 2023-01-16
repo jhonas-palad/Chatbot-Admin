@@ -119,9 +119,11 @@ function IntentForm() {
             finally{
                 setTimeout(()=> setAlertMsg(''), 1500);
                 setIsLoading(false);
+                
             }
         }
         isUpdate && getIntentData();
+        setTagErr('');
 
     }, [urlParams]); //eslint-disable-line
 

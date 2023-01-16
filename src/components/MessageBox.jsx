@@ -89,7 +89,7 @@ const MessageBox = ({ messages,setMessages, botUser,currentUser, onSend, childre
                     <Card.Title 
                         className="d-flex justify-content-between align-items-center p-2 border-bottom">
                         <div>
-                            <h5 className="mb-0">Asketty</h5>
+                            <h5 className="mb-0">Chatbot</h5>
                             
                             {getStatusMsg()}
                             

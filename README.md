@@ -5,7 +5,10 @@ This web application can be used for manipulating intents that serves as trainin
 
 **Implemented using React JS**
 
+TODOS:
 
+- Add progress bar during the model training
+- Implement discard changes
 
 ### Screenshots
 <img src="./md_assets/1.png" alt="drawing" style="width:750px;"/>
@@ -16,5 +19,17 @@ This web application can be used for manipulating intents that serves as trainin
 <img src="./md_assets/6.png" alt="drawing" style="width:750px;"/>
 <img src="./md_assets/7.png" alt="drawing" style="width:750px;"/>
 <img src="./md_assets/8.png" alt="drawing" style="width:750px;"/>
+
+### Update:
+
+Chatbot model training parameters can be configured.
+
+<img src="./md_assets/9.png" alt="drawing" style="width:750px;"/>
+
+A log is displayed on every epochs.
+<img src="./md_assets/10.png" alt="drawing" style="width:750px;"/>
+
+The configuration can be reset from previous training configuration
+<img src="./md_assets/11.png" alt="drawing" style="width:750px;"/>
 
 
