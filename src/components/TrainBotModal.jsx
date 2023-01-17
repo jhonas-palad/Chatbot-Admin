@@ -1,14 +1,15 @@
 import { useState, useEffect, useRef } from 'react';
-import { Button } from 'react-bootstrap';
 
+import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
-import InputGroup from 'react-bootstrap/InputGroup';
+import ProgressBar from 'react-bootstrap/ProgressBar';
+import Spinner from 'react-bootstrap/Spinner';
 import Modal from 'react-bootstrap/Modal';
 import '../css/trainbotmodal.css';
 
 
 
-const TrainBotModal = ({modelConfig, updateModelConfig, show, onHide}) => {
+const TrainBotModal = ({modelConfig, updateModelConfig, show, setShow}) => {
     const {
         num_epochs, 
         number_of_epochs_min,
@@ -48,7 +49,10 @@ const TrainBotModal = ({modelConfig, updateModelConfig, show, onHide}) => {
     const [hiddenLayerSizeDisabled, setHiddenLayerSizeDisabled] = useState(false);
     
     const [changesMade, setChangesMade] = useState(false);
-
+    const [isTrainingProgress, setIsTrainingProgress] = useState(false);
+    const [trainingPercent, setTrainingPercent] = useState(0);
+    const [trainingLog, setTrainingLog] = useState("Training Log");
+    const [isConnecting, setIsConnecting] = useState(false);
     useEffect(() => {
         if(learningRate.value !== learning_rate 
             || numEpochs.value !== num_epochs || hiddenLayerSize.value !== hidden_layer_size) {
@@ -71,7 +75,14 @@ const TrainBotModal = ({modelConfig, updateModelConfig, show, onHide}) => {
             setNumEpochsDisabled(state);
             setHiddenLayerSizeDisabled(state);
         }
-        setChangesMade(false);
+        const setInitalChanges = () => {
+            setIsConnecting(true);
+            setChangesMade(false);
+            setTrainingLog("Connecting...");
+            setLogMessages([]);
+        }
+
+        setInitalChanges();
         const ws = new WebSocket('ws://127.0.0.1:8000/chatbot/train');
         const dataConf = JSON.stringify({
             learning_rate: learningRate.value,
@@ -81,7 +92,9 @@ const TrainBotModal = ({modelConfig, updateModelConfig, show, onHide}) => {
         const msgList = [];
         ws.onopen = (e) => {
             disableToggleHelper(true);
+            
             ws.send(dataConf);
+            setIsTrainingProgress(true);
         }
         ws.onmessage = (event) => {
             const data = JSON.parse(event.data);
@@ -90,37 +103,52 @@ const TrainBotModal = ({modelConfig, updateModelConfig, show, onHide}) => {
                 msgList.push(data.msg);
                 setLogMessages([...msgList]);
             }
+            if(data?.percent_complete){
+                setTrainingPercent(data.percent_complete);
+            }
             if (data?.num_epochs) {
                 updateModelConfig({...modelConfig, ...data});
             }
         }
         ws.onclose = (e) => {
             disableToggleHelper(false);
+            setIsTrainingProgress(false);
+            setIsConnecting(false);
+            setTrainingPercent(0);
+        }
+        ws.onerror = (e) => {
+            setTrainingLog("Failed to connect, Try again");
         }
     }
+
+    const handleClose = () => !isTrainingProgress && setShow(false);
 
     return (
         <Modal
             show={show}
             size="xl"
             centered
-            onHide={onHide}
+            onHide={handleClose}
+            backdrop="static"
+            keyboard={false}
         >
             <Modal.Header closeButton>
                 <span style={{fontSize: "1.5rem"}} className="display-4">Configuration</span>
             </Modal.Header>
             <Modal.Body>
                 <div className='row'>
-                    <div style={{height:"400px"}} className="col-7 log-area pr-0 dflex-center position-relative">
+                    <div className="col-7 log-area p-0  dflex-center position-relative">
+                        
                         {
                             logMessages.length > 0 ? (
-                                <pre style={{height:"100%"}} className="scrollarea position-inherit w-100 align-self-start mt-1">
+                                <pre style={{height:"400px", background: "#eeeeee"}} className="scrollarea position-inherit w-100 align-self-start m-0 p-1">
                                     {logMessages.map((value, index) => `${index + 1}: ${value} \n`)}
                                 </pre>
                             ) : (
-                                <p>Console Log</p>
+                                <p>{trainingLog}</p>
                             )
                         }
+                        
                         
                         
                     </div>
@@ -169,27 +197,55 @@ const TrainBotModal = ({modelConfig, updateModelConfig, show, onHide}) => {
                         </div>
                     </div>
                 </div>
+                
             </Modal.Body>
             <Modal.Footer className="justify-content-between">
-                <div>
-                    <p style={{fontSize: "0.9rem"}} className="mb-0 mt-0 ">Previous Loss: {loss.toFixed(4)}</p>
-                </div>
-                <div className='d-flex gap-1'>
-                    {
-                        changesMade && <Button 
-                                onClick={handleResetConfig}
-                                variant="secondary">
-                                Reset config
+                {
+                    isTrainingProgress ? (<ProgressBar
+                        className='w-100'
+                        striped
+                        variant='info'
+                        now={trainingPercent}
+                        animated
+                    /> ) : (
+                        <>
+                            <div>
+                                <p style={{fontSize: "0.9rem"}} className="mb-0 mt-0 ">Previous Loss: {loss.toFixed(4)}</p>
+                            </div>
+                            <div className='d-flex gap-1'>
+                            {
+                                changesMade && <Button 
+                                        onClick={handleResetConfig}
+                                        variant="secondary">
+                                        Reset config
+                                    </Button>
+                            }
+                            
+                            <Button
+                                onClick={handleSaveTrain}
+                            >
+                                {
+                                    isConnecting ? (
+                                        <>
+                                            <Spinner
+                                            as="span"
+                                            size='sm'
+                                            animation='border'
+                                            style={{marginRight:"10px"}}
+                                            />
+                                            Connecting...
+                                        </>
+                                    ) : (
+                                        <span>Save & train</span>
+                                    )
+                                }
+                                
                             </Button>
-                    }
-                    
-                    <Button
-                        onClick={handleSaveTrain}
-                    >
-                        Save & train
-                    </Button>
-                    
-                </div>
+                        
+                            </div>
+                        </>
+                    )
+                }
             </Modal.Footer>
         </Modal>
     )

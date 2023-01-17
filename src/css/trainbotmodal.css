@@ -1,5 +1,13 @@
 .log-area{
-    background: #eeeeee;
+    
     border-right: 1px solid #e5e5e5;
     border-left: 1px solid #e5e5e5;
+}
+.log-area > pre {
+    width: 300px;
+    height: 100px;
+    background-color: #FFFFFF;
+    position: relative;
+    box-shadow: inset 0px 5px 30px -25px #A5A5A5, 
+    inset 0px -5px 30px -25px #A5A5A5;
 }
