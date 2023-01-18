@@ -14,7 +14,7 @@ export const ContainerFormTab = (
       useEditTextCallback
     }
 ) => {
-    const {label, inputState, onChange, buttonClick, errMsg, setShowSaveChanges} = useFormGroupProps();
+    const {label, inputState, onChange, buttonClick, errMsg} = useFormGroupProps();
 
     const { container, setContainer, origContainer } = useContainerState();
 

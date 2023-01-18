@@ -1,7 +1,6 @@
 import React, { useState, useRef } from 'react';
 import Accordion from 'react-bootstrap/Accordion';
 import Button from 'react-bootstrap/Button';
-import FormControl from 'react-bootstrap/FormControl';
 import Form from 'react-bootstrap/Form';
 import { isAllAlphaNumeric } from '../utils/validators';
 

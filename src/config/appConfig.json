@@ -1,0 +1,14 @@
+{
+    "debug": true,
+    "productionConfig": {
+        "domainName": "chatbotapi.site",
+        "httpURL": "https://chatbotapi.site",
+        "webSocketURL": "wss://chatbotapi.site"
+    },
+    "debugConfig": {
+        "domainName": "127.0.0.1:8000",
+        "httpURL": "http://127.0.0.1:8000",
+        "webSocketURL": "ws://127.0.0.1:8000"
+    },
+    "appName": "Chatbot Admin"
+}

@@ -4,6 +4,8 @@ import { MessageInput } from './MessageInput';
 import Button from 'react-bootstrap/Button';
 import Card from 'react-bootstrap/Card';
 import uuid from 'react-uuid';
+
+
 const MessageBox = ({ messages,setMessages, botUser,currentUser, onSend, children, status }) => {
     const handleOptionClick = ({title, text}) => {
         setMessages(prevState => {
@@ -21,7 +23,6 @@ const MessageBox = ({ messages,setMessages, botUser,currentUser, onSend, childre
         });
 
     }
-
     const renderMessage = useCallback((message) => {
         const { member, text, options} = message;
         const time = message?.time;
@@ -87,22 +88,30 @@ const MessageBox = ({ messages,setMessages, botUser,currentUser, onSend, childre
             
                 <Card className="p-0">
                     <Card.Title 
-                        className="d-flex justify-content-between align-items-center p-2 border-bottom">
+                        className="mb-0 d-flex justify-content-between align-items-center p-2 border-bottom">
                         <div>
-                            <h5 className="mb-0">Chatbot</h5>
+                            <h5 className="mb-0">
+                                Chatbot
+                            </h5>
                             
                             {getStatusMsg()}
                             
                         </div>
-                        {children}
-                    </Card.Title>
-                    <Card.Body 
-                        className="scrollarea d-flex flex-column flex-column-reverse" 
-                        style={{position:"relative", height:"500px"}}>
                         {
-                            messages.map(message => renderMessage(message))
-                            
+                            children[0]
                         }
+                    </Card.Title>
+                    <Card.Body style={{position:"relative"}} className="p-0">
+                        
+                        {
+                            children[1]
+                        }
+                        <div className='scrollarea d-flex p-2 flex-column flex-column-reverse'style={{position:"relative", height:"500px"}}>
+                            {
+                                messages.map(message => renderMessage(message))
+                                
+                            }
+                        </div>
                     </Card.Body>
                     <MessageInput
                             onSendMessage={onSend}

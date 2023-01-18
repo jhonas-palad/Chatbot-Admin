@@ -1,15 +1,21 @@
 import { useState, useEffect } from 'react'
 import useAxiosPrivate from '../hooks/useAxiosPrivate';
-import MessageBox  from './MessageBox';
+import useAuth from "../hooks/useAuth";
 
-import Spinner from 'react-bootstrap/Spinner';
+import MessageBox  from './MessageBox';
+import SmallAlert from './SmallAlert';
+
 import Button from 'react-bootstrap/Button';
-import Toast from 'react-bootstrap/Toast';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faGears } from '@fortawesome/free-solid-svg-icons';
 
 import TrainBotModal from './TrainBotModal'
+import { API_URL, WS_URL } from '../api/axios';
+
+
+const CHAT_URL = WS_URL + '/chat';
+const MODEL_CONFIG_URL = API_URL + '/chatbot/get_config';
 
 const BOT = {
     id:99,
@@ -20,38 +26,28 @@ const initialMessages = [
     {member: BOT, text: 'You can test me here on this chat', time: new Date().toLocaleTimeString()},
     {member: BOT, text: 'Hello there!'}
 ]
-const WS_URL = 'ws://127.0.0.1:8000/chat';
-const TRAINBOT_URL = '/chatbot/train';
-const MODEL_CONFIG_URL = '/chatbot/get_config';
+
+const createMsg = (text, member) => ({ member, text });
+const connectWS = () => (new WebSocket(CHAT_URL));
 
 export const Chatbot = () => {
+    const {full_name} = useAuth();
     const axiosPrivate = useAxiosPrivate();
-    const [isLoading, setIsLoading] = useState(false);
     const [messages, setMessages] = useState([]);
-    const [status, setStatus] = useState(0);
-    const [alertMsg, setAlertMsg ] = useState({
-        heading:'',
-        body:''
-    });
+    const [webSocketState, setWebSocketState] = useState(0);
     const [showModal, setShowModal] = useState(false);
     const [ modelConfig, setModelConfig] = useState(null);
-    const [showAlert, setShowAlert] = useState(false);
+    const [trainErrMsg, setTrainErrMsg] = useState('');
     const [ws, setWs] = useState(null);
     const [currUser] = useState({
         id: 1,
-        name: 'Jhonas'
+        name: full_name
     });
-
-
-    const connectWS = () => {
-        const new_ws = new WebSocket(WS_URL);
-        return new_ws;
-    }
 
     useEffect(() => {
         const new_ws = connectWS();
         setWs(new_ws);
-        setStatus(new_ws.readyState);
+        setWebSocketState(new_ws.readyState);
         return () => {
             if(new_ws && new_ws.readyState === 1){
                 new_ws.close()
@@ -66,25 +62,20 @@ export const Chatbot = () => {
                 setModelConfig(data);
             }
             catch(err){
-                return {};
+                setModelConfig(null);
             }
         }
         getModelConfig();
-    }, []);
+    }, [axiosPrivate]);
 
-    const createMsg = (text, member) => {
-        return {
-            member,
-            text
-        }
-    }
     useEffect( ()=>{
         if(ws){
-            ws.onopen = (event) => {
-                setStatus(1);
+            ws.onopen = () => {
+                setWebSocketState(1);
                 if(messages.length === 0){
                     setMessages(prevState => [...initialMessages, ...prevState])
                 }
+                setTrainErrMsg('');
             }
             
             ws.onmessage = ({data}) => {
@@ -109,11 +100,12 @@ export const Chatbot = () => {
                     return [...newMsgs, ...prevState]
                 });
             }
-            ws.onclose = (event) => {
-                setStatus(2)
+            ws.onclose = () => {
+                setWebSocketState(2);
             }
             ws.onerror = (event) => {
-                setStatus(2)
+                setTrainErrMsg('Server is unvailable at this moment. Refresh the page to try again');
+                setWebSocketState(2);
             }
             
         }
@@ -147,26 +139,28 @@ export const Chatbot = () => {
 
     return (
         <section className="d-flex flex-column justify-content-center align-items-center">
-            <MessageBox
-                messages = {messages}
-                setMessages = {setMessages}
-                currentUser = {currUser}
-                botUser = {BOT}
-                onSend={onSend}
-                status={status}
-            >
-            {
-                showModal ? 
+           {
+                showModal && modelConfig ? 
                     <TrainBotModal
                         show={showModal}
                         setShow={setShowModal}
                         modelConfig={modelConfig}
                         updateModelConfig={updateModelConfig}
-                    /> : (null)
+                    /> : (
+                        null
+                    )
             }
+           <MessageBox
+                messages = {messages}
+                setMessages = {setMessages}
+                currentUser = {currUser}
+                botUser = {BOT}
+                onSend={onSend}
+                status={webSocketState}
+            >
                 <div>
                     <Button 
-                        
+                        disabled={trainErrMsg}
                         type="button" 
                         onClick={()=> setShowModal(true)}>
                             <span style={{marginRight:'8px'}}>
@@ -178,6 +172,12 @@ export const Chatbot = () => {
                             </span>
                     </Button>
                 </div>
+                {
+                    trainErrMsg ? (
+                        <SmallAlert alertMsg={trainErrMsg}/>
+                    ) : (null)
+                }
+                
             </MessageBox>
         </section>
 

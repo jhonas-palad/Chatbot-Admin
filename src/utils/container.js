@@ -28,3 +28,15 @@ export const compareContainer = (container1, container2) => {
         return value === container2[index].value; 
     });
 }
+
+export const isEmptyContainer = (container) => {
+    return container.length === 0;
+}
+
+export const extractValues = (container) => {
+    if(isEmptyContainer(container)){
+        return false;
+    }
+    const containerValues = container.map(({value}) => value );
+    return containerValues;
+}

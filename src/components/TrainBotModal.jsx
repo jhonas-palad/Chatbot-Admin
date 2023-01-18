@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
@@ -6,8 +6,6 @@ import ProgressBar from 'react-bootstrap/ProgressBar';
 import Spinner from 'react-bootstrap/Spinner';
 import Modal from 'react-bootstrap/Modal';
 import '../css/trainbotmodal.css';
-
-
 
 const TrainBotModal = ({modelConfig, updateModelConfig, show, setShow}) => {
     const {
@@ -61,7 +59,7 @@ const TrainBotModal = ({modelConfig, updateModelConfig, show, setShow}) => {
         else{
             setChangesMade(false);
         }
-    }, [learningRate, numEpochs, hiddenLayerSize]);
+    }, [learningRate, numEpochs, hiddenLayerSize, learning_rate, num_epochs, hidden_layer_size]);
 
     const handleResetConfig = (e) => {
         setNumEpochs({...numEpochs, value: num_epochs})

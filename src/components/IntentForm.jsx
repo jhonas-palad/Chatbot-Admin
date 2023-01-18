@@ -9,13 +9,12 @@ import IntentContext from '../context/IntentProvider';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 
 import { isEmptyString, isAllAlphaNumeric } from '../utils/validators';
-import { makeUID, compareContainer } from '../utils/container';
+import { makeUID, compareContainer, extractValues } from '../utils/container';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEllipsis } from '@fortawesome/free-solid-svg-icons'
 
 import CenterSpinner from './CenterSpinner';
-
 import Accordion from 'react-bootstrap/Accordion';
 import Alert from 'react-bootstrap/Alert';
 import Button from 'react-bootstrap/Button';
@@ -24,6 +23,7 @@ import DropdownButton from 'react-bootstrap/DropdownButton';
 import Form from 'react-bootstrap/Form';
 import Modal from 'react-bootstrap/Modal';
 import Tab from 'react-bootstrap/Tab';
+import Spinner from 'react-bootstrap/Spinner';
 import Tabs from 'react-bootstrap/Tabs';
 import EditableEntity from './EditableEntity';
 
@@ -76,7 +76,7 @@ function IntentForm() {
     const [currentEntityElements, setCurrentEntityElements] = useState([]);
 
     const [ isLoading, setIsLoading ] = useState(false);
-
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const axiosPrivate = useAxiosPrivate();
 
     
@@ -117,7 +117,7 @@ function IntentForm() {
                     needAuth && navigate('/login', {state: {from: location}});
                 }
             finally{
-                setTimeout(()=> setAlertMsg(''), 1500);
+                setTimeout(()=> setAlertMsg(''), 2500);
                 setIsLoading(false);
                 
             }
@@ -224,23 +224,14 @@ function IntentForm() {
     }
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const extractValues = (container) => {
-            if(isEmptyContainer(container)){
-                return false;
-            }
-            const containerValues = container.map(({value}) => value );
-            return containerValues;
-        }
-        const isEmptyContainer = (container) => {
-            return container.length === 0;
-        }
+        
         if (isEmptyString(tag)) {
             setTagErr('Please enter a tag.');
             return;
         }else{
             setTagErr('');
         }
-        if (!isAllAlphaNumeric(tag)) {
+        if (!isAllAlphaNumeric(tag, false)) {
             setTagErr('Tag must only contain alphanumeric values.');
             return;
         }else{
@@ -262,13 +253,25 @@ function IntentForm() {
             return;
         }
 
-        const JSONData = JSON.stringify({
-            tag: tagValue,
-            patterns: intentPatternValues,
-            responses: intentResponsesValues,
-            entities: intentEntities
-        });
-
+        const JSONData = {};
+        if (isUpdate){
+            if (tagValue !== origTag.trim()){
+                JSONData["tag"] = tagValue;
+            }
+            if (!compareContainer(intentPatterns, origPatterns)){
+                JSONData["patterns"] = intentPatternValues;
+            }
+            if (!compareContainer(intentResponses, origResponses)){
+                JSONData["responses"] = intentResponsesValues;
+            }
+        }else{
+            JSONData['tag'] = tagValue;
+            JSONData['patterns'] = intentPatternValues;
+            JSONData['responses'] = intentResponsesValues;
+            JSONData['entities'] = intentEntities;
+        }
+        JSONData['entities'] = intentEntities;
+        console.log(JSONData);
         const config = {
             url: !isUpdate ? CREATE_URL : UPDATE_URL,
             method: !isUpdate ? 'POST' : 'PUT',
@@ -276,9 +279,11 @@ function IntentForm() {
                 Accept: 'application/json',
                 'Content-Type': 'application/json'
             },
-            data: JSONData
+            data: JSON.stringify(JSONData)
         }
+
         try{
+            setIsSubmitting(true);
             const response = await axiosPrivate(config);
             if(!isUpdate){
                 setIntents([response.data.data,...intents])
@@ -332,7 +337,7 @@ function IntentForm() {
                 setShowSaveChanges(false);
                 setEditTag(false);
             }
-            
+            setIsSubmitting(false);
         }
 
     }
@@ -423,11 +428,31 @@ function IntentForm() {
                             </Form.Control.Feedback>
                         </div>
                         <div style={{gap:"1rem"}}className="d-flex">
-                            { showSaveChanges && <Button type="submit">Save Changes</Button>}
+                            { 
+                                showSaveChanges 
+                                    && 
+                                <Button type="submit">
+                                    {
+                                        isSubmitting ? <Spinner
+                                                    as="span"
+                                                    animation='border'
+                                                    className='mr-1'
+                                                    size="sm"/> : <span>Save Changes</span>
+                                    }
+                                </Button>
+                            
+                            }
                             {
                                 !isUpdate ? (
-                                    <Button type="submit" variant="success">
-                                        Create
+                                    <Button type="submit" variant="success" disabled={isSubmitting}>
+                                        {
+                                            isSubmitting ? <Spinner
+                                                            as="span"
+                                                            animation='border'
+                                                            className='mr-1'
+                                                            size="sm"/> : <span>Create</span>
+                                        }
+                                        
                                     </Button>
                                 ) : (
                                     <DropdownButton

@@ -6,6 +6,7 @@ import IntentContext from '../context/IntentProvider';
 import IntentListBar from './IntentListBar';
 import MsgBlock from './MsgBlock';
 
+import SmallAlert from './SmallAlert';
 import CenterSpinner from './CenterSpinner';
 
 const URL_ENDPOINT = '/intent/all';
@@ -20,7 +21,7 @@ function IntentList() {
     const {intents, setIntents } = useContext(IntentContext);
 
     const [isLoading, setIsLoading] = useState(false);
-
+    const [serverErrorMsg, setServerErrorMsg] = useState("");
 
     useEffect(() => {
         const getIntents = async () => {
@@ -33,6 +34,8 @@ function IntentList() {
             }catch(err) {
                 if(err?.response?.status === 403){
                     navigate("/login", {state: {from: location},replace: true})
+                }else{
+                    setServerErrorMsg("Server is unavailable");
                 }
             }
             finally{
@@ -90,14 +93,23 @@ function IntentList() {
                         <CenterSpinner/>
                     ) : ( 
                         !renderList ? (
-                            <p>Empty List</p>
+                            <SmallAlert border={false} alertMsg={serverErrorMsg || "Empty List"} variant={serverErrorMsg ? "danger" : "primary"} />
                         ) : (
-                            renderList.map(elem=> elem)
+                            <>
+                                {
+                                    !serverErrorMsg ? (
+                                        renderList.map(elem => elem)
+                                    ) : (
+                                        <SmallAlert border={false} alertMsg={serverErrorMsg} variant="danger" />
+                                    )
+                                }
+                            </>
+                            
+                            
                         )
                     )
                 }
-                
-                
+
             </IntentListBar>
         </>
      );
