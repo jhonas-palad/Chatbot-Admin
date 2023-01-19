@@ -6,7 +6,9 @@ import ProgressBar from 'react-bootstrap/ProgressBar';
 import Spinner from 'react-bootstrap/Spinner';
 import Modal from 'react-bootstrap/Modal';
 import '../css/trainbotmodal.css';
+import { WS_URL } from '../api/axios';
 
+const TRAIN_URL = WS_URL + '/chatbot/train';
 const TrainBotModal = ({modelConfig, updateModelConfig, show, setShow}) => {
     const {
         num_epochs, 
@@ -81,7 +83,7 @@ const TrainBotModal = ({modelConfig, updateModelConfig, show, setShow}) => {
         }
 
         setInitalChanges();
-        const ws = new WebSocket('ws://127.0.0.1:8000/chatbot/train');
+        const ws = new WebSocket(TRAIN_URL);
         const dataConf = JSON.stringify({
             learning_rate: learningRate.value,
             num_epochs: numEpochs.value,
